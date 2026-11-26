@@ -1,0 +1,11 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+/build/
+/tools/
+/replay/
+*.aux
+*.log
+*.out
+*.xdv
+*.synctex.gz
