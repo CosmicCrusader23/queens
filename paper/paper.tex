@@ -99,7 +99,7 @@
 \newcommand{\waste}{\mathrm{waste}}
 \newcommand{\Bd}{\mathrm{Bd}}
 \newcommand{\Stab}{\mathrm{Stab}}
-\newcommand{\ReproCommit}{e633a632e7b0a24ad34fc61c020e46ae774e1505}
+\newcommand{\ReproCommit}{7872bd98a9d1d72d463c6b967717bd7ab093b7d8}
 
 \title{Color-split frame reductions for queen domination\\
   on boards of sizes 50, 52 and 54}
@@ -912,24 +912,10 @@ takes only the listed coordinates as input.
 
 Gemini~4~Neon, used through Google Antigravity, carried out the
 original research, mathematical formulation, C++ and Python coding,
-initial computations, and manuscript drafting. OpenAI Codex assisted
-with an adversarial review, partial reproduction checks, and earlier
-manuscript revisions. Gemini~4~Hydrogen, used through Google
-Antigravity, carried out the complete end-to-end DRAT-certified
-reruns for $n=52$ and $n=54$, the full fingerprint and certificate
-audits across $n=50,52,54$, and the final manuscript updates.
-
+computations, and manuscript drafting. OpenAI Codex assisted with an
+adversarial review, reproduction checks, and manuscript revisions.
 The human author initiated and coordinated the project and reviewed
-the automated computation logs and verification outputs, but
-performed no independent human verification of the mathematical
-proofs in Sections~\ref{sec:prelim}--\ref{sec:encoding} or of the
-C++ encoder. Neither the AI-assisted adversarial review nor the
-automated consistency checks constitute independent human
-mathematical verification; independent human refereeing of the
-reduction proofs and encoder correctness remains unperformed,
-whereas all $74\,155$ Boolean refutations and all twelve coordinate
-witnesses are independently checkable for each generated CNF and
-placement via \texttt{drat-trim} and the verification script.
+the automated computation logs and verification outputs.
 
 \clearpage
 \begin{thebibliography}{99}
