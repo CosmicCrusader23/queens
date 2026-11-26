@@ -99,11 +99,11 @@
 \newcommand{\waste}{\mathrm{waste}}
 \newcommand{\Bd}{\mathrm{Bd}}
 \newcommand{\Stab}{\mathrm{Stab}}
-\newcommand{\ReproCommit}{11f87cc21a45e966d9971b245c8acf859357e731}
+\newcommand{\ReproCommit}{e633a632e7b0a24ad34fc61c020e46ae774e1505}
 
 \title{Color-split frame reductions for queen domination\\
   on boards of sizes 50, 52 and 54}
-\author{Edwin Chan\thanks{The original research was carried out with Gemini 4 Neon in Google Antigravity. See Section~\ref{sec:provenance} for provenance.}}
+\author{Edwin Chan\thanks{Research, coding, computations, and drafting were carried out with AI assistance; no independent human mathematical verification of the proofs or encoder has been performed. See Section~\ref{sec:provenance} for full provenance.}}
 \date{November 27, 2026}
 
 \begin{document}
@@ -762,8 +762,8 @@ DRAT proof passed the checker.
 $n$ & $k$ & Canonical & Pruned & Leaves & Solve (s) & Check (s) & Wall (s) & DRAT (GB) \\
 \midrule
 50 & 25 & 54\,626 & 44\,288 & 19\,090 & 1\,799.29 & 2\,703.82 & 492.68 & 2.69 \\
-52 & 26 & 63\,119 & 43\,354 & 30\,814 & 6\,086.83 & 5\,170.79 & 1\,286.19 & 6.21 \\
-54 & 27 & 72\,268 & 59\,164 & 24\,251 & 3\,034.71 & 3\,652.80 & 807.08 & 4.35 \\
+52 & 26 & 63\,119 & 43\,354 & 30\,814 & 5\,539.94 & 5\,434.66 & 1\,170.76 & 6.21 \\
+54 & 27 & 72\,268 & 59\,164 & 24\,251 & 3\,512.24 & 4\,388.23 & 856.67 & 4.35 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -772,8 +772,9 @@ A separate Python program re-enumerates the canonical cases, pruning
 counts, and expected branch tags and matches them to the records.
 It also checks the upper-bound witnesses directly. Every one of the
 $74\,155$ recorded DIMACS hashes matches regeneration with the
-pinned encoder. The $n=50$ log comes from a complete certification
-run against that encoder. For $n=52,54$ we use the original run logs.
+pinned encoder. All three logs ($n=50,52,54$) come from complete
+end-to-end DRAT-certified runs using the pinned encoder, solver,
+and checker.
 
 The JSONL files record the checker outcomes and the hashes of the
 formulas they cover. The raw DRAT proofs were deleted after
@@ -784,28 +785,31 @@ generated formulas.
 
 \subsection{Timing and controlled benchmarks}
 
-In the older logs the fields \texttt{solve\_cpu\_s} and
-\texttt{check\_cpu\_s} sum elapsed times across workers, measured
-by \texttt{std::chrono::steady\_clock}. The revised driver names
-them \texttt{solve\_elapsed\_sum\_s} and
-\texttt{check\_elapsed\_sum\_s}. Solve time measures the
-\texttt{solve()} call, including DRAT trace output during the call.
-Checker time includes process startup, proof checking, and the wait
-for the checker to exit. Worker wall time includes encoding, file
-operations, solving, and checking, and excludes case enumeration
-and ordering. A sum over workers may exceed wall time.
+The summary fields \texttt{solve\_elapsed\_sum\_s} and
+\texttt{check\_elapsed\_sum\_s} sum elapsed times across workers,
+measured by \texttt{std::chrono::steady\_clock} (replacing the
+earlier \texttt{solve\_cpu\_s} and \texttt{check\_cpu\_s} names).
+Solve time measures the \texttt{solve()} call, including DRAT trace
+output during the call. Checker time includes process startup, proof
+checking, and the wait for the checker to exit. Worker wall time
+includes encoding, file operations, solving, and checking, and
+excludes case enumeration and ordering. A sum over workers may
+exceed wall time.
 
-The pinned code uses CaDiCaL 3.1.0~\cite{CaDiCaL} and
-the \texttt{drat-trim} revision given in the repository. The
-checker is run in backward mode with binary proof input and the
-options \texttt{-w -t 1000000}. The solver's \texttt{auto} mode
-uses CaDiCaL's \texttt{unsat} configuration for the branches
-marked in the source and the default configuration otherwise.
-We ran the $n=50$ certification on an Apple M4 with ten workers
-and the pinned tools. The original $n=52,54$ runs were reported
-on a ten-core Apple M4. Their log schema records certification,
-algebraic pruning, and symmetry breaking. The logs lack version,
-configuration, and worker count fields.
+The pinned code uses CaDiCaL 3.1.0~\cite{CaDiCaL} (commit
+\texttt{e4d9bd93}) and the \texttt{drat-trim} revision
+(\texttt{2e3b2dc0}) given in the repository. The checker is run in
+backward mode with binary proof input and the options
+\texttt{-w -t 1000000}. The solver's \texttt{auto} mode uses
+CaDiCaL's \texttt{unsat} configuration for the branches marked in
+the source and the default configuration otherwise. We ran all three
+certifications ($n=50,52,54$) on a ten-core Apple~M4
+(macOS~26.5.2, Apple Clang~17.0.0) with ten workers,
+\texttt{--config auto}, and the pinned tools. Each log schema
+records certification, algebraic pruning, symmetry breaking, and
+elapsed sums; tool commits, solver configuration, and worker count
+are fixed by the pinned build and invocation rather than stored
+in the summary record.
 
 For a controlled measurement on one Apple M4, we used one worker,
 the pinned tools, and \texttt{auto} configuration. We chose up to
@@ -876,35 +880,56 @@ Each set below is pairwise non-attacking (distinct rows, columns, difference dia
 \section{Code and data availability}\label{sec:data}
 
 The encoder, checker wrapper, audit logs, and witness coordinates
-are available in the
-\href{https://github.com/CosmicCrusader23/queens}{public repository}.
-
-Use revision
+are available in the public GitHub repository
+\url{https://github.com/CosmicCrusader23/queens} at pinned commit
 \href{https://github.com/CosmicCrusader23/queens/tree/\ReproCommit}{\texttt{\ReproCommit}}.
 The \href{https://github.com/CosmicCrusader23/queens/blob/\ReproCommit/README.md}{reproduction instructions}
-give the build commands and dependency hashes, the audit and
-benchmark commands, and a full regeneration procedure. The tested
-environment was macOS on Apple silicon with
-Clang~17, C++20, and Python~3.14. The Python scripts use the standard
-library.
+give the build, audit, and benchmark commands, a full regeneration
+procedure, and the pinned upstream commits: CaDiCaL~3.1.0 at
+\href{https://github.com/arminbiere/cadical/commit/e4d9bd93af444c6575a908a24da2c4130cb2a1c7}{\texttt{e4d9bd93af444c6575a908a24da2c4130cb2a1c7}}
+and \texttt{drat-trim} at
+\href{https://github.com/marijnheule/drat-trim/commit/2e3b2dc0ecf938addbd779d42877b6ed69d9a985}{\texttt{2e3b2dc0ecf938addbd779d42877b6ed69d9a985}}.
+The tested environment was a ten-core Apple~M4 (arm64) running
+macOS~26.5.2 (Darwin~25.5.0) with Apple Clang~17.0.0, C++20, and
+Python~3.14.0 (standard library only).
 
-After building, run \texttt{queen\_prover} with \texttt{--certify},
-\texttt{--config auto}, and \texttt{--n} set to 50, 52, or 54. Use
-\texttt{--out} to save each log and run \texttt{verify\_certificate.py}
-on it. The expected checked counts are $19\,090$, $30\,814$, and
-$24\,251$. Use \texttt{--proof-dir} to retain the CNF and DRAT files.
-Table~\ref{tab:certified} gives the proof sizes observed in
-the three runs. Runtimes and retained sizes can vary. The
-witness check takes only the listed coordinates as input.
+After building with \texttt{make -j4}, run \texttt{queen\_prover}
+with \texttt{--jobs 10 --certify --config auto} and \texttt{--n}
+set to 50, 52, or 54, using \texttt{--out} to save each JSONL log
+and running \texttt{python3 scripts/verify\_certificate.py} to check
+tags, regenerated CNF hashes, and checker statuses. The expected
+checked leaf counts are $19\,090$, $30\,814$, and $24\,251$. Use
+\texttt{--proof-dir} (naming a new directory) to retain the CNF
+and DRAT files; otherwise temporary files are deleted immediately
+after each leaf is checked. Table~\ref{tab:certified} gives the
+runtimes and decimal proof sizes ($2.69$\,GB, $6.21$\,GB, and
+$4.35$\,GB, totalling $13.25$\,GB) observed in the three certified
+runs. Runtimes and retained sizes can vary across systems. The
+witness check (\texttt{--witness-json results/even\_upper\_witnesses.json})
+takes only the listed coordinates as input.
 
 \section{AI provenance}\label{sec:provenance}
 
-Gemini 4 Neon, used through Google Antigravity, carried out the
-original research, computations, coding, and drafting. The human
-author selected and coordinated the project. OpenAI Codex assisted
-with the adversarial review, reproduction checks, and revision
-reported here. Sections~\ref{sec:encoding} and~\ref{sec:results}
-describe the analytical and computational checks.
+Gemini~4~Neon, used through Google Antigravity, carried out the
+original research, mathematical formulation, C++ and Python coding,
+initial computations, and manuscript drafting. OpenAI Codex assisted
+with an adversarial review, partial reproduction checks, and earlier
+manuscript revisions. Gemini~4~Hydrogen, used through Google
+Antigravity, carried out the complete end-to-end DRAT-certified
+reruns for $n=52$ and $n=54$, the full fingerprint and certificate
+audits across $n=50,52,54$, and the final manuscript updates.
+
+The human author initiated and coordinated the project and reviewed
+the automated computation logs and verification outputs, but
+performed no independent human verification of the mathematical
+proofs in Sections~\ref{sec:prelim}--\ref{sec:encoding} or of the
+C++ encoder. Neither the AI-assisted adversarial review nor the
+automated consistency checks constitute independent human
+mathematical verification; independent human refereeing of the
+reduction proofs and encoder correctness remains unperformed,
+whereas all $74\,155$ Boolean refutations and all twelve coordinate
+witnesses are independently checkable for each generated CNF and
+placement via \texttt{drat-trim} and the verification script.
 
 \clearpage
 \begin{thebibliography}{99}
