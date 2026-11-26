@@ -26,11 +26,11 @@
 
 | Board | Verified leaves | Matching hashes | Log provenance |
 | ---: | ---: | ---: | --- |
-| 50 | 19,090 | 19,090 | Complete certification with the current encoder |
-| 52 | 30,814 | 30,814 | Original certification |
-| 54 | 24,251 | 24,251 | Original certification |
+| 50 | 19,090 | 19,090 | Complete certification with the pinned encoder, solver, and checker |
+| 52 | 30,814 | 30,814 | Complete certification rerun with the pinned encoder, solver, and checker |
+| 54 | 24,251 | 24,251 | Complete certification rerun with the pinned encoder, solver, and checker |
 
-The current logs record a successful DRAT check for every leaf. Rebuilding the DIMACS files and comparing all 74,155 digests checks which formulas those records cover. The raw proofs were temporary.
+The current logs record a successful DRAT check for every leaf from complete end-to-end runs of the pinned binary (`queen_prover` with CaDiCaL 3.1.0, `drat-trim`, `--jobs 10 --config auto --certify`). Rebuilding the DIMACS files and comparing all 74,155 digests confirms exact correspondence with the pinned encoder. The raw proofs were temporary and removed after verification.
 
 The controlled 99-leaf benchmark completed three runs per mode. All 297 produced proof traces passed. Its median wall times were 0.33 s without certification and 3.35 s with certification. The median sum of the individual checker times was 2.88 s. The raw measurements and sampling rule are in `results/benchmark-overhead-n26.json` and `bench/verification_overhead.py`.
 
@@ -45,4 +45,4 @@ The full $n=26$ pruning benchmark used the same solver and checker settings and 
 
 ## Remaining limits
 
-The current revision regenerated all $n=50$ proofs. It audited the original $n=52,54$ checker records and regenerated every formula on those two boards. Their historical logs lack dependency hashes, solver configuration and worker count fields. The build pins and environment documentation apply to the checked reproduction. The controlled pruning benchmark compares two modes of the present prover. The mathematical coverage proof has been audited against the source and checked on small boards, and remains a written argument.
+All three target boards ($n=50,52,54$) now have complete DRAT-certified runs under the pinned build (`CaDiCaL` 3.1.0 commit `e4d9bd93`, `drat-trim` commit `2e3b2dc0`, `--jobs 10 --config auto`), though tool commit pins, solver configuration, and worker count are fixed by the build and invocation rather than stored inside the JSONL summary line. The controlled pruning benchmark compares two modes of the present prover. The mathematical coverage proof has been audited via AI-assisted review and checked on small boards, and remains a written argument without independent human verification of the proofs or encoder.
