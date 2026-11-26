@@ -83,4 +83,4 @@ The summary fields `solve_elapsed_sum_s` and `check_elapsed_sum_s` sum worker el
 
 ## Provenance
 
-Gemini 4 Neon, through Google Antigravity, performed the original mathematical research and computations and produced the original code and manuscript. OpenAI Codex assisted with the adversarial review, reproduction checks, and revision. The frame method builds on [*Hint and Conquer*](https://github.com/TahaRostami/Gamma/blob/hint-and-conquer/doc.pdf) and [Davies](https://hexagonmath.org/2611.00830v1).
+Gemini 4 Neon, through Google Antigravity, performed the original mathematical research and computations and produced the original code and manuscript. OpenAI Codex assisted with the adversarial review, reproduction checks, and revision. The human author initiated and coordinated the project and reviewed the automated computation logs and verification outputs. The frame method builds on [*Hint and Conquer*](https://github.com/TahaRostami/Gamma/blob/hint-and-conquer/doc.pdf) and [Davies](https://hexagonmath.org/2611.00830v1).
