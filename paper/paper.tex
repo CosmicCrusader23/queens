@@ -99,7 +99,7 @@
 \newcommand{\waste}{\mathrm{waste}}
 \newcommand{\Bd}{\mathrm{Bd}}
 \newcommand{\Stab}{\mathrm{Stab}}
-\newcommand{\ReproCommit}{60e1e0bc753628720b0731b3bdaac1abace240d6}
+\newcommand{\ReproCommit}{11f87cc21a45e966d9971b245c8acf859357e731}
 
 \title{Color-split frame reductions for queen domination\\
   on boards of sizes 50, 52 and 54}
@@ -739,19 +739,19 @@ the zero-deficit family or the reduced permutation constraints.
 
 \section{Computations and verification}\label{sec:results}
 
-\subsection{Archived runs and replay}
+\subsection{Certified runs and record audit}
 
-Table~\ref{tab:certified} reports the original runs. In certification
-mode each worker writes the DIMACS formula, hashes it with SHA-256,
+Table~\ref{tab:certified} reports the three certification runs.
+Each worker writes the DIMACS formula, hashes it with SHA-256,
 and asks CaDiCaL to write a binary DRAT proof. The unmodified
 \texttt{drat-trim} checker~\cite{DRATtrim} checks the formula and
 proof. The driver records the solver verdict and checker status
-before deleting temporary proof and formula files. All archived
-lower-bound records report UNSAT and a successful DRAT check.
+and deletes the temporary files. Every leaf was refuted and its
+DRAT proof passed the checker.
 
 \begin{table}[!htbp]
 \centering\small
-\caption{Archived even-board runs. Solve and check columns sum
+\caption{Certified even-board runs. Solve and check columns sum
   elapsed seconds across leaves. Wall time measures the worker
   phase. Proof sizes are decimal gigabytes generated during a run.}
 \label{tab:certified}
@@ -761,7 +761,7 @@ lower-bound records report UNSAT and a successful DRAT check.
 \toprule
 $n$ & $k$ & Canonical & Pruned & Leaves & Solve (s) & Check (s) & Wall (s) & DRAT (GB) \\
 \midrule
-50 & 25 & 54\,626 & 44\,288 & 19\,090 & 2\,021.14 & 2\,415.24 & 532.63 & 2.69 \\
+50 & 25 & 54\,626 & 44\,288 & 19\,090 & 1\,799.29 & 2\,703.82 & 492.68 & 2.69 \\
 52 & 26 & 63\,119 & 43\,354 & 30\,814 & 6\,086.83 & 5\,170.79 & 1\,286.19 & 6.21 \\
 54 & 27 & 72\,268 & 59\,164 & 24\,251 & 3\,034.71 & 3\,652.80 & 807.08 & 4.35 \\
 \bottomrule
@@ -769,32 +769,22 @@ $n$ & $k$ & Canonical & Pruned & Leaves & Solve (s) & Check (s) & Wall (s) & DRA
 \end{table}
 
 A separate Python program re-enumerates the canonical cases, pruning
-counts, and expected branch tags. It matches them to the audit
-records and checks the upper-bound witnesses directly. As part
-of revision, we regenerated the DIMACS fingerprints of all
-$74\,155$ leaves with the pinned encoder. The archival hashes agree
-for $19\,088$ of $19\,090$ leaves at $n=50$, and for every leaf at
-$n=52$ and $n=54$. The two $n=50$ differences are the
-one-diagonal-deficit monochromatic formulas. Omitting the later
-border-waste clauses reproduces the two archival hashes.
-We regenerated and checked DRAT proofs for both current formulas
-and retained the resulting pairs. A sample replay checked $34$,
-$42$, and $34$ leaves on the three boards, including one of the
-two changed formulas at $n=50$.
+counts, and expected branch tags and matches them to the records.
+It also checks the upper-bound witnesses directly. Every one of the
+$74\,155$ recorded DIMACS hashes matches regeneration with the
+pinned encoder. The $n=50$ log comes from a complete certification
+run against that encoder. For $n=52,54$ we use the original run logs.
 
-The JSONL files are audit summaries recording checks performed
-during the original runs and the targeted replay. Most original
-proofs were deleted and can be regenerated from the pinned encoder.
-The retained pairs can be checked directly. The revision did not
-replay a fresh proof for every leaf. The mathematical argument
-depends on coverage of the case split and the correctness of the
-encoding. The computational evidence depends on the recorded
-DRAT checks and their association with the formulas. Proof
-checking can be repeated without relying on CaDiCaL's verdicts.
+The JSONL files record the checker outcomes and the hashes of the
+formulas they cover. The raw DRAT proofs were deleted after
+checking. They can be regenerated and checked using the public code
+in Section~\ref{sec:data}. The lower-bound argument combines the
+coverage and correctness of the encoding with refutations of the
+generated formulas.
 
-\subsection{Timing and controlled benchmark}
+\subsection{Timing and controlled benchmarks}
 
-In the archived logs the fields \texttt{solve\_cpu\_s} and
+In the older logs the fields \texttt{solve\_cpu\_s} and
 \texttt{check\_cpu\_s} sum elapsed times across workers, measured
 by \texttt{std::chrono::steady\_clock}. The revised driver names
 them \texttt{solve\_elapsed\_sum\_s} and
@@ -805,16 +795,17 @@ for the checker to exit. Worker wall time includes encoding, file
 operations, solving, and checking, and excludes case enumeration
 and ordering. A sum over workers may exceed wall time.
 
-The pinned reproduction uses CaDiCaL 3.1.0~\cite{CaDiCaL} and
+The pinned code uses CaDiCaL 3.1.0~\cite{CaDiCaL} and
 the \texttt{drat-trim} revision given in the repository. The
 checker is run in backward mode with binary proof input and the
 options \texttt{-w -t 1000000}. The solver's \texttt{auto} mode
 uses CaDiCaL's \texttt{unsat} configuration for the branches
 marked in the source and the default configuration otherwise.
-The historical runs were reported on a ten-core Apple M4.
-Their log schema records certification, algebraic pruning, and
-symmetry breaking. It lacks version, configuration, and worker
-count fields, so the revision pins the environment used for replay.
+We ran the $n=50$ certification on an Apple M4 with ten workers
+and the pinned tools. The original $n=52,54$ runs were reported
+on a ten-core Apple M4. Their log schema records certification,
+algebraic pruning, and symmetry breaking. The logs lack version,
+configuration, and worker count fields.
 
 For a controlled measurement on one Apple M4, we used one worker,
 the pinned tools, and \texttt{auto} configuration. We chose up to
@@ -827,6 +818,19 @@ respectively. In certified mode the median sum for the checker
 was $2.88$\,s, including one invocation per leaf. All 99
 proofs passed in each certified repeat. These times describe
 certification overhead on that sample.
+
+\paragraph{Effect of algebraic pruning.}
+We timed the full certified $n=26$ computation on one Apple M4
+with ten workers, using the pinned solver and checker, identical
+solver settings, and the same symmetry rules in both modes. Only
+the algebraic case-pruning pass was toggled. We measured wall
+time for the complete command, including case enumeration, CNF
+construction, proof generation, and DRAT checking. Across three
+runs per mode with alternating order, the median fell from
+$58.49$\,s with pruning off to $24.39$\,s with pruning on, a
+$2.40\times$ speedup for this computation. The pass reduced the
+number of formulas from $7\,668$ to $2\,773$. All proofs passed
+the checker in all six runs.
 
 Davies~\cite[Section~4, Table~2]{Davies2026} reports single-core
 solver and checker seconds on a shared machine running four to
@@ -871,16 +875,16 @@ Each set below is pairwise non-attacking (distinct rows, columns, difference dia
 
 \section{Code and data availability}\label{sec:data}
 
-The encoder, checker wrapper, audit logs, retained proof pairs, and
-witness coordinates are available in the
+The encoder, checker wrapper, audit logs, and witness coordinates
+are available in the
 \href{https://github.com/CosmicCrusader23/queens}{public repository}.
 
 Use revision
 \href{https://github.com/CosmicCrusader23/queens/tree/\ReproCommit}{\texttt{\ReproCommit}}.
 The \href{https://github.com/CosmicCrusader23/queens/blob/\ReproCommit/README.md}{reproduction instructions}
-give the build commands and dependency hashes, the archive audit,
-the direct check of the retained pairs, and a full regeneration
-procedure. The tested environment was macOS on Apple silicon with
+give the build commands and dependency hashes, the audit and
+benchmark commands, and a full regeneration procedure. The tested
+environment was macOS on Apple silicon with
 Clang~17, C++20, and Python~3.14. The Python scripts use the standard
 library.
 
@@ -889,9 +893,9 @@ After building, run \texttt{queen\_prover} with \texttt{--certify},
 \texttt{--out} to save each log and run \texttt{verify\_certificate.py}
 on it. The expected checked counts are $19\,090$, $30\,814$, and
 $24\,251$. Use \texttt{--proof-dir} to retain the CNF and DRAT files.
-For all three boards, the original proof data totalled about
-$13.25$\,GB before deletion. Runtimes and retained sizes can vary.
-The witness check takes only the listed coordinates as input.
+Table~\ref{tab:certified} gives the proof sizes observed in
+the three runs. Runtimes and retained sizes can vary. The
+witness check takes only the listed coordinates as input.
 
 \section{AI provenance}\label{sec:provenance}
 
