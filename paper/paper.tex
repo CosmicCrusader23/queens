@@ -1,0 +1,994 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs,array}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{pict2e}
+\usepackage[hidelinks]{hyperref}
+
+\hypersetup{
+  pdftitle={Color-split frame reductions for queen domination on boards of sizes 50, 52 and 54},
+  pdfauthor={Edwin Chan}
+}
+
+\setlength{\textwidth}{\dimexpr\paperwidth-2.10in\relax}
+\setlength{\textheight}{\dimexpr\paperheight-2.05in\relax}
+\setlength{\oddsidemargin}{0.05in}
+\setlength{\evensidemargin}{\oddsidemargin}
+\setlength{\headheight}{12pt}
+\setlength{\headsep}{16pt}
+\setlength{\topmargin}{\dimexpr-0.06in-\headheight-\headsep\relax}
+\setlength{\footskip}{26pt}
+\setlength{\parindent}{1.1em}
+\setlength{\parskip}{1.8pt plus 0.5pt}
+\setlength{\emergencystretch}{1.3em}
+\linespread{1.06}
+\raggedbottom
+\clubpenalty=10000
+\widowpenalty=10000
+\displaywidowpenalty=10000
+\setlength{\jot}{5pt}
+\AtBeginDocument{%
+  \setlength{\abovedisplayskip}{11pt plus 2pt minus 2pt}%
+  \setlength{\belowdisplayskip}{11pt plus 2pt minus 2pt}%
+  \setlength{\abovedisplayshortskip}{6pt plus 2pt minus 1pt}%
+  \setlength{\belowdisplayshortskip}{9pt plus 2pt minus 1pt}%
+}
+
+\makeatletter
+\def\ps@preprint{%
+  \let\@mkboth\@gobbletwo
+  \def\@oddhead{\normalfont\small Queen domination numbers\hfil\thepage}%
+  \let\@evenhead\@oddhead
+  \let\@oddfoot\@empty
+  \let\@evenfoot\@empty
+}
+\pagestyle{preprint}
+\renewcommand{\@seccntformat}[1]{\csname the#1\endcsname.\enspace}
+\renewcommand{\section}{\@startsection{section}{1}{\z@}%
+  {-21pt plus -4pt minus -2pt}{8pt plus 2pt}%
+  {\normalfont\fontsize{14}{17}\selectfont\bfseries\raggedright}}
+\renewcommand{\subsection}{\@startsection{subsection}{2}{\z@}%
+  {-15pt plus -3pt minus -2pt}{5pt plus 1pt}%
+  {\normalfont\bfseries\raggedright}}
+\renewenvironment{proof}[1][\proofname]{%
+  \par\pushQED{\qed}\normalfont
+  \topsep8pt plus 2pt minus 1pt\relax
+  \trivlist\item[\hskip\labelsep\itshape #1\@addpunct{.}]\ignorespaces
+}{\popQED\endtrivlist\@endpefalse}
+\def\@maketitle{%
+  \begingroup
+    \raggedright
+    {\fontsize{17}{21}\selectfont\bfseries\@title\par}%
+    \vskip9pt
+    {\normalsize\@author\par}%
+    \vskip3pt
+    {\small\@date\par}%
+  \endgroup
+  \vskip14pt
+}
+\renewenvironment{abstract}{%
+  \par\noindent\textbf{Abstract}\par\nobreak\vskip3pt
+  \noindent\ignorespaces
+}{\par}
+\setlength{\abovecaptionskip}{0pt}
+\setlength{\belowcaptionskip}{8pt}
+\long\def\@makecaption#1#2{%
+  \vskip\abovecaptionskip
+  {\small\raggedright\noindent\textbf{#1.}\enspace #2\par}%
+  \vskip\belowcaptionskip
+}
+\makeatother
+
+\newtheoremstyle{result}
+  {10pt plus 2pt minus 1pt}{8pt plus 2pt minus 1pt}
+  {\itshape}{}{\bfseries}{.}{0.55em}{}
+\theoremstyle{result}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+\newcommand{\waste}{\mathrm{waste}}
+\newcommand{\Bd}{\mathrm{Bd}}
+\newcommand{\Stab}{\mathrm{Stab}}
+\newcommand{\ReproCommit}{60e1e0bc753628720b0731b3bdaac1abace240d6}
+
+\title{Color-split frame reductions for queen domination\\
+  on boards of sizes 50, 52 and 54}
+\author{Edwin Chan\thanks{The original research was carried out with Gemini 4 Neon in Google Antigravity. See Section~\ref{sec:provenance} for provenance.}}
+\date{November 27, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We determine the domination number $\gamma(Q_n)$ of the queen's graph for
+$n=50,52,54$, obtaining $\gamma(Q_{50})=26$, $\gamma(Q_{52})=27$, and
+$\gamma(Q_{54})=28$. For each lower bound we group candidate placements
+by the frame of their outermost empty lines and refine the frame
+constraints by chessboard parity. Algebraic tests discard some cases,
+and the remaining Boolean formulas are refuted with DRAT proofs
+checked by \texttt{drat-trim}. Explicit placements attain the three
+bounds. We also give explicit witnesses for five previously reported
+independent domination numbers.
+\end{abstract}
+
+\section{Introduction}\label{sec:intro}
+
+The queen's graph $Q_n$ has the squares of an $n\times n$ chessboard as
+vertices. Distinct squares are adjacent if they share a row, column, or
+diagonal. The domination number $\gamma(Q_n)$ is the least size of a
+set that occupies or attacks every square. The independent domination
+number $i(Q_n)$ imposes the additional condition that its queens are
+pairwise non-attacking. Thus $\gamma(Q_n)\le i(Q_n)$. The sequences are
+indexed as \href{https://oeis.org/A075458}{A075458} and
+\href{https://oeis.org/A075324}{A075324} in the OEIS.
+
+For even $n$, Spencer's bound as reported by Cockayne~\cite{Cockayne1990}
+and the bound of Raghavan and Venkatesan~\cite{RV1987} give
+$\gamma(Q_n)\ge n/2$. For even $26\le n\le120$, the upper bounds of
+\"Osterg\aa rd and Weakley~\cite{OW2001} leave the two possibilities
+$n/2$ and $n/2+1$. For the role of monochromatic placements on even
+boards, see Weakley~\cite{Weakley2022}.
+
+Neuhaus~\cite[Section~2.4]{Neuhaus2009} reported integer-programming
+results for ordinary and independent domination on even boards.
+\emph{Hint and Conquer}~\cite{Hint2026} splits the search by the
+outermost empty rows and columns, using diagonal-coverage constraints
+on the resulting frame. Davies~\cite[Sections 2 and 4]{Davies2026}
+refined the split by the four deficits in occupied line counts and
+obtained certified ordinary domination numbers through $n=46$.
+\DJ uki\'c~\cite{Djukic2026} reported a DRAT computation using Davies's
+frame method for $n=48$. Here we refine the frame and side identities by
+chessboard parity, account for case and branch symmetries separately,
+and apply the resulting reduction to $n=50,52,54$.
+
+\begin{theorem}\label{thm:main}
+The queen domination numbers on the three boards are
+\[
+  \gamma(Q_{50})=26,\qquad \gamma(Q_{52})=27,\qquad \gamma(Q_{54})=28.
+\]
+\end{theorem}
+
+\begin{proof}
+If a set of size at most $k=n/2$ dominates, it can be extended to a
+dominating set of size $k$ by adding arbitrary distinct squares.
+Theorem~\ref{thm:coverage} places a dihedral image of such a set in a
+satisfiable generated instance. Section~\ref{sec:results} accounts for
+the refutation of every generated instance on these three boards.
+The placements in Section~\ref{sec:witnesses} give the matching upper bounds.
+\end{proof}
+
+\begin{theorem}[Neuhaus~\cite{Neuhaus2009}]\label{thm:indep}
+The independent domination numbers satisfy
+\[
+  i(Q_{32})=17,\quad i(Q_{34})=18,\quad i(Q_{38})=20,\quad
+  i(Q_{40})=21,\quad i(Q_{44})=23.
+\]
+\end{theorem}
+
+\begin{proof}
+For an alternative verification, the matching ordinary domination numbers are established in
+\emph{Hint and Conquer}~\cite{Hint2026} for $n=32,34,38$ and by
+Davies~\cite[Theorem 1.3 and Table 2]{Davies2026} for $n=40,44$.
+Section~\ref{sec:witnesses} supplies a directly checked independent
+placement attaining each of these lower bounds for $i(Q_n)$.
+\end{proof}
+
+\section{Frame geometry and dihedral symmetry}\label{sec:prelim}
+
+Label the squares of $Q_n$ by $(x, y) \in \{0, \dots, n-1\}^2$, where $x$ indexes columns and $y$ indexes rows. Through $(x,y)$ pass the row $y$, column $x$, difference diagonal $t = y - x \in \{-(n-1), \dots, n-1\}$, and sum diagonal $s = x + y \in \{0, \dots, 2n-2\}$. Define the \emph{chessboard color} of square $(x,y)$ as $q(x,y) := (x+y)\bmod 2 \in \{0,1\}$, of difference diagonal $t$ as $t \bmod 2 \in \{0,1\}$ (taking the canonical non-negative residue), and of sum diagonal $s$ as $s \bmod 2 \in \{0,1\}$. Every square on a color-$q$ diagonal has color $q$, and both diagonals through a color-$q$ square have color $q$.
+
+Unless stated otherwise, let $n=2k\ge4$ and suppose $D$ is a
+dominating set of size $k$. Let $R,C$ be the sets of occupied row and
+column indices, and let $T,S$ be the occupied difference and sum
+diagonals. Diagonals carry their type as well as their index, so $T$
+and $S$ are disjoint. Define the \emph{deficits}
+\[
+  d_R = k - |R|, \quad d_C = k - |C|, \quad d_T = k - |T|, \quad d_S = k - |S| \qquad (\text{all } \ge 0).
+\]
+Since $|R|, |C| \le k = n - k$ and $k \ge 2$, at least two rows and two columns are empty (contain no queen). Let $a<b$ be the least and greatest empty columns, and $c<d$ the
+least and greatest empty rows. Intervals denote integer intervals.
+Figure~\ref{fig:frame} shows the frame and its parity classes.
+\begin{itemize}[leftmargin=1.8em,itemsep=2pt]
+  \item \emph{margins} $m_l = a$, $m_r = n - 1 - b$, $m_b = c$, $m_t = n - 1 - d$;
+  \item \emph{box dimensions} $w = b - a \ge 1$ and $h = d - c \ge 1$;
+  \item \emph{vertical sides} $V = \{a,b\} \times [c,d]$, \emph{horizontal sides} $H = [a,b] \times \{c,d\}$, and \emph{border} $\Bd = V \cup H$ (each of the four corners $(a,c),(a,d),(b,c),(b,d)$ counted once).
+\end{itemize}
+
+\begin{figure}[!htbp]
+\centering
+\setlength{\unitlength}{5.2mm}
+\begin{picture}(14.75,9.8)(-1.15,-1.1)
+  \begingroup
+  \color{black!15}
+  \multiput(1,0)(2,0){4}{\rule{1\unitlength}{1\unitlength}}
+  \multiput(0,1)(2,0){4}{\rule{1\unitlength}{1\unitlength}}
+  \multiput(1,2)(2,0){4}{\rule{1\unitlength}{1\unitlength}}
+  \multiput(0,3)(2,0){4}{\rule{1\unitlength}{1\unitlength}}
+  \multiput(1,4)(2,0){4}{\rule{1\unitlength}{1\unitlength}}
+  \multiput(0,5)(2,0){4}{\rule{1\unitlength}{1\unitlength}}
+  \multiput(1,6)(2,0){4}{\rule{1\unitlength}{1\unitlength}}
+  \multiput(0,7)(2,0){4}{\rule{1\unitlength}{1\unitlength}}
+  \endgroup
+  \linethickness{0.2pt}
+  \multiput(0,0)(1,0){9}{\line(0,1){8}}
+  \multiput(0,0)(0,1){9}{\line(1,0){8}}
+  \linethickness{0.95pt}
+  \put(1.5,1.5){\framebox(5,4){}}
+  \begingroup
+  \color{blue!65!black}
+  \put(1.5,1.5){\line(1,1){4}}
+  \put(3.1,2.9){\makebox(0,0)[t]{\small $t$}}
+  \endgroup
+  \begingroup
+  \color{red!60!black}
+  \put(2.5,5.5){\line(1,-1){4}}
+  \put(5.6,2.3){\makebox(0,0)[r]{\small $s$}}
+  \endgroup
+  \put(1.5,-0.27){\makebox(0,0)[t]{$a$}}
+  \put(6.5,-0.27){\makebox(0,0)[t]{$b$}}
+  \put(-0.24,1.5){\makebox(0,0)[r]{$c$}}
+  \put(-0.24,5.5){\makebox(0,0)[r]{$d$}}
+  \put(8.2,-0.31){\makebox(0,0)[l]{$x$}}
+  \put(-0.21,8.23){\makebox(0,0)[r]{$y$}}
+  \put(8.3,6.3){\makebox(0,0)[l]{\small Vertical sides $V$}}
+  \put(8.3,5.5){\makebox(0,0)[l]{\small Horizontal sides $H$}}
+  \put(8.3,4.1){\makebox(0,0)[l]{\small White squares ($q=0$)}}
+  \put(8.3,3.3){\makebox(0,0)[l]{\small Shaded squares ($q=1$)}}
+\end{picture}
+\caption{The frame $\Bd=V\cup H$ on a schematic $8\times8$ board,
+  drawn through the centres of boundary squares. The difference
+  diagonal $t=0$ meets squares of color $0$. The sum diagonal $s=7$
+  meets squares of color $1$.}\label{fig:frame}
+\end{figure}
+
+Because $a,b,c,d$ are extreme, all $m_l + m_r$ margin columns outside $[a,b]$ and all $m_b + m_t$ margin rows outside $[c,d]$ are occupied, giving
+\begin{equation}\label{eq:margins}
+  m_l + m_r \le |C| = k - d_C, \qquad m_b + m_t \le |R| = k - d_R.
+\end{equation}
+A square is \emph{needy} if both its row and column are empty; domination requires every needy square to lie on at least one occupied diagonal. No border square is occupied. Let $z_q = |\{(x,y)\in D : (x+y)\equiv q\pmod 2\}|$ denote the number of color-$q$ queens ($z_0 + z_1 = k$), $T_q = \{t \in T : t \equiv q\pmod 2\}$, $S_q = \{s \in S : s \equiv q\pmod 2\}$, and let $e_p(R)$ (resp.\ $e_p(C)$) denote the number of empty rows (resp.\ empty columns) of parity $p \in \{0,1\}$. Note that whenever $d_T = 0$ we have $|T_q| = z_q$ for both $q$, and whenever $d_S = 0$ we have $|S_q| = z_q$.
+
+The case of $D$ is
+\[
+  \kappa(D)=(m_l,m_r,m_b,m_t;\,d_R,d_C,d_T,d_S).
+\]
+Write $\rho(x)=n-1-x$. The dihedral group acts on cases by
+\begin{align*}
+  g_0 &: (x,y)\mapsto(x,y),           & (m_l,m_r,m_b,m_t;\,d_R,d_C,d_T,d_S),\\
+  g_1 &: (x,y)\mapsto(\rho(x),y),     & (m_r,m_l,m_b,m_t;\,d_R,d_C,d_S,d_T),\\
+  g_2 &: (x,y)\mapsto(x,\rho(y)),     & (m_l,m_r,m_t,m_b;\,d_R,d_C,d_S,d_T),\\
+  g_3 &: (x,y)\mapsto(\rho(x),\rho(y)), & (m_r,m_l,m_t,m_b;\,d_R,d_C,d_T,d_S),\\
+  g_4 &: (x,y)\mapsto(y,x),           & (m_b,m_t,m_l,m_r;\,d_C,d_R,d_T,d_S),\\
+  g_5 &: (x,y)\mapsto(\rho(y),x),     & (m_t,m_b,m_l,m_r;\,d_C,d_R,d_S,d_T),\\
+  g_6 &: (x,y)\mapsto(y,\rho(x)),     & (m_b,m_t,m_r,m_l;\,d_C,d_R,d_S,d_T),\\
+  g_7 &: (x,y)\mapsto(\rho(y),\rho(x)), & (m_t,m_b,m_r,m_l;\,d_C,d_R,d_T,d_S).
+\end{align*}
+On an even board $g_1,g_2,g_5,g_6$ reverse chessboard parity and exchange
+diagonal types. In a square frame they exchange the two corner-to-corner
+diagonals. The other four maps preserve parity and diagonal types.
+The maps $g_4,g_5,g_6,g_7$ exchange vertical and horizontal sides.
+
+Unlike the frame-only canonicalization in Davies's production
+enumeration~\cite[Sections 2 and 4]{Davies2026}, we minimize the entire
+tuple $\kappa$ lexicographically over its eight images. Every placement
+has a dihedral image in a minimum case. For that case let
+$\Stab(\kappa)=\{g\in D_4:g(\kappa)=\kappa\}$.
+
+\section{Color-split frame and side identities}\label{sec:colorsplit}
+
+For any subset $X \subseteq \Bd$ of border squares and color $q \in \{0,1\}$, let $X_q = \{(x,y)\in X : (x+y)\equiv q\pmod 2\}$, let $N_q(X)$ be the number of needy squares in $X_q$, let $m(s) \in \{0,1,2\}$ be the number of occupied diagonals passing through square $s$, and let $\beta_X(L) = |X \cap L|$ for any diagonal $L$.
+
+Every diagonal meets $\Bd$ in at most two squares. A diagonal
+meeting both vertical sides changes height by $w$, so when $w\ge h$
+this can occur only at opposite corners in a square frame. The
+horizontal statement follows by transpose. For a square frame let
+$U$ be the difference diagonal $t=c-a$ through $(a,c),(b,d)$ and
+$W$ the sum diagonal $s=a+d$ through $(a,d),(b,c)$. Write $[P]$ for
+the indicator of a proposition $P$. Set
+\[
+  u_0=[U\in T],\qquad v_0=[W\in S],\qquad
+  \delta_q=[U\in T_q]+[W\in S_q].
+\]
+Set $u_0=v_0=\delta_q=0$ for nonsquare frames. The non-negative
+\emph{color-$q$ waste} counts are
+\begin{align*}
+  \waste_F^{(q)} &:= \sum_{L \in T_q \cup S_q} (2 - \beta_{\Bd}(L))\\
+    &\quad + \#\{(L,s) : L \in T_q \cup S_q,\; s \in \Bd_q \cap L \text{ non-needy}\}\\
+    &\quad + \#\{\text{needy } s \in \Bd_q : m(s)=2\}, \\
+  \waste_V^{(q)} &:= \#\{L \in T_q \cup S_q : \beta_V(L)=0\}\\
+    &\quad + \#\{(L,s) : L \in T_q \cup S_q,\; s \in V_q \cap L \text{ non-needy}\}\\
+    &\quad + \#\{\text{needy } s \in V_q : m(s)=2\},
+\end{align*}
+and symmetrically $\waste_H^{(q)}$ with $H$ in place of $V$.
+
+\begin{theorem}[Color-Split Identities $F_q, V_q, H_q$]\label{thm:colorsplit}
+For every dominating set $D$ of $k$ queens on $Q_n$ with $k\le n-2$,
+and each $q\in\{0,1\}$, we have
+\begin{align}
+  \waste_F^{(q)} &= 2(|T_q| + |S_q|) - N_q(\Bd) \ge 0, \label{eq:Fq} \\
+  \waste_V^{(q)} &= (|T_q| + |S_q|) + \delta_q - N_q(V) \ge 0 \qquad (w \ge h), \label{eq:Vq} \\
+  \waste_H^{(q)} &= (|T_q| + |S_q|) + \delta_q - N_q(H) \ge 0 \qquad (h \ge w). \label{eq:Hq}
+\end{align}
+\end{theorem}
+
+\begin{proof}
+Fix $q \in \{0,1\}$ and count the incidence set $I_q(X) = \#\{(L,s) : L \in T_q \cup S_q,\; s \in X_q \cap L\}$ in two ways. Because every diagonal of color $q$ meets only squares of color $q$ and conversely, counting by squares gives
+\[
+  \begin{aligned}
+    I_q(X) = \sum_{s \in X_q} m(s)
+      &= N_q(X) + \#\{\text{needy } s \in X_q : m(s)=2\}\\
+      &\quad + \#\{(L,s) : L \in T_q \cup S_q,\; s \in X_q \cap L \text{ non-needy}\},
+  \end{aligned}
+\]
+since domination ensures $m(s) \ge 1$ on every needy square $s \in X_q$. Counting by diagonals gives:
+\begin{itemize}[leftmargin=1.8em,itemsep=2pt]
+  \item For $X = \Bd$: $I_q(\Bd) = \sum_{L \in T_q \cup S_q} \beta_{\Bd}(L) = 2(|T_q| + |S_q|) - \sum_{L \in T_q \cup S_q} (2 - \beta_{\Bd}(L))$.
+  \item For $X = V$ with $w \ge h$: $I_q(V) = (|T_q| + |S_q|) - \#\{L \in T_q \cup S_q : \beta_V(L)=0\} + \delta_q$.
+  \item For $X = H$ with $h \ge w$: identical with $H$ in place of $V$.
+\end{itemize}
+Equating the two expressions for $I_q(X)$ yields \eqref{eq:Fq}--\eqref{eq:Hq}, and every term defining $\waste_X^{(q)}$ is non-negative.
+\end{proof}
+
+Each empty row contributes two needy squares to $V$ and each empty
+column two to $H$. All four corners are needy and counted in both.
+Thus $\sum_qN_q(V)=2(n-|R|)$, $\sum_qN_q(H)=2(n-|C|)$,
+and $\sum_qN_q(\Bd)=2(n-|R|)+2(n-|C|)-4$.
+For $n=2k$, the sum over colors recovers the uncolored
+identities of Davies~\cite[Section~2]{Davies2026}.
+\begin{align}
+  \waste_F &= 4 - 2(d_R + d_C + d_T + d_S) \ge 0, \label{eq:Ftot} \\
+  \waste_V &= -d_T - d_S - 2d_R + [w=h](u_0+v_0) \ge 0 \qquad (w \ge h), \label{eq:Vtot} \\
+  \waste_H &= -d_T - d_S - 2d_C + [w=h](u_0+v_0) \ge 0 \qquad (h \ge w). \label{eq:Htot}
+\end{align}
+In particular, $d_R + d_C + d_T + d_S \le 2$, so at least two
+deficits are zero. The four are at most $k-1$, since a nonempty
+placement occupies a line of each type.
+
+\section{Algebraic exclusion of cases}\label{sec:algebraic}
+
+The following necessary conditions are tested before generating SAT
+instances. The implementation checks the margin inequalities in
+Lemma~\ref{lem:ns1} in $O(k)$ steps per case. Each parity test takes
+a constant number of operations.
+
+\begin{lemma}[NS-1: Margin Reachability and Hall Triangle Capacity]\label{lem:ns1}
+Let $n = 2k$ and suppose $w > h$ (for $h > w$, apply the transpose $g_4$). Then $d_R = d_T = d_S = 0$, $\waste_V = 0$, and:
+\begin{enumerate}[label=(\roman*),leftmargin=2em,itemsep=2pt]
+  \item $m_l \le \lfloor h/2 \rfloor$ and $m_r \le \lfloor h/2 \rfloor$;
+  \item $m_l + m_r + m_b + m_t \le k$;
+  \item for every $r \in \{1, \dots, \max(m_l, m_r)\}$, $\max(0, m_l - r + 1) + \max(0, m_r - r + 1) \le h + 1 - 2r$;
+  \item if $m_b > 0$ then $2 m_b \le w$ and $w \le 2h + 2$; if $m_t > 0$ then $2 m_t \le w$ and $w \le 2h + 2$.
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+Since $w > h$, \eqref{eq:Vtot} gives $-d_T - d_S - 2d_R \ge 0$, forcing $d_R = d_T = d_S = 0$ and $\waste_V = 0$. In particular, every occupied diagonal meets $V = \{a,b\} \times [c,d]$, so every queen $(x,y) \in D$ satisfies
+\[
+  y - x \in [c-b, d-b] \cup [c-a, d-a] \qquad \text{and} \qquad x + y \in [a+c, a+d] \cup [b+c, b+d].
+\]
+For any margin column $x < a$ with $\delta := a - x \ge 1$, the first $t$-interval gives $y \le x + d - b = d - w - \delta \le c - 2$ (as $w \ge h + 1$) whereas both $s$-intervals satisfy $y \ge a + c - x = c + \delta \ge c + 1$; similarly the second $s$-interval has $y \ge b + c - x = c + w + \delta \ge d + 2$ whereas both $t$-intervals satisfy $y \le d - \delta$. Thus the unique surviving intersection is
+\[
+  y \in [c + \delta,\; d - \delta] \subseteq (c, d),
+\]
+which is non-empty if and only if $2\delta \le d - c = h$. Because column $0$ is occupied whenever $m_l = a \ge 1$ (taking $\delta = m_l$), we obtain $m_l \le \lfloor h/2 \rfloor$, and symmetrically $m_r \le \lfloor h/2 \rfloor$, proving~(i).
+
+Since every queen in the $m_l + m_r$ margin columns ($x < a$ or $x > b$) lies in a row strictly inside $(c, d)$, each margin column contains at least one queen, and $d_R = 0$ implies all queens occupy distinct rows, these queens occupy at least $m_l + m_r$ distinct rows inside $(c, d)$, disjoint from the $m_b + m_t$ occupied margin rows outside $[c, d]$. Hence $m_l + m_r + m_b + m_t \le |R| = k$, proving~(ii). Moreover, for any $r \ge 1$, the $\max(0, m_l - r + 1) + \max(0, m_r - r + 1)$ margin columns at distance $\ge r$ from $[a,b]$ must place their queens in distinct rows of $[c + r, d - r]$ (size $h + 1 - 2r$), giving~(iii).
+
+Finally, for any margin row $y < c$ with $\delta := c - y \ge 1$ (so $y = c - \delta$), the two $t$-intervals and two $s$-intervals restrict $x$ to $(X_{t,1} \cup X_{t,2}) \cap (X_{s,1} \cup X_{s,2})$, where
+\begin{align*}
+  X_{t,1} &= [b - h - \delta,\; b - \delta], & X_{t,2} &= [a - h - \delta,\; a - \delta], \\
+  X_{s,1} &= [a + \delta,\; a + h + \delta], & X_{s,2} &= [b + \delta,\; b + h + \delta].
+\end{align*}
+Since $\max X_{t,2} = a - \delta < a + \delta \le \min(X_{s,1} \cup X_{s,2})$ and $\max X_{t,1} = b - \delta < b + \delta = \min X_{s,2}$, the unique surviving intersection is $X_{t,1} \cap X_{s,1}$, namely
+\[
+  x \in [\max(b - h - \delta,\; a + \delta),\; \min(b - \delta,\; a + h + \delta)],
+\]
+which is non-empty if and only if $2\delta \le b - a = w$ and $w - 2h \le 2\delta$. If $m_b > 0$, row $0$ ($\delta = m_b$) forces $2 m_b \le w$, and row $c - 1$ ($\delta = 1$) forces $w \le 2h + 2$. Symmetry gives the same for $m_t$, proving~(iv).
+\end{proof}
+
+\begin{lemma}[NS-2: Odd-Width Parity Elimination for $n \equiv 2 \pmod 4$]\label{lem:ns2}
+Let $n = 2k$ with $k$ odd ($n \equiv 2 \pmod 4$). No dominating $k$-set has a non-square frame ($w \neq h$) whose longer side has odd length.
+\end{lemma}
+
+\begin{proof}
+By transpose symmetry assume $w > h$ with $w$ odd. Then $d_R = d_T = d_S = 0$ and $\waste_V = 0$, so $\waste_V^{(0)} = 0$. Since $d_T = d_S = 0$, $|T_0| = |S_0| = z_0$. Because $w = b - a$ is odd, $a \not\equiv b \pmod 2$, so each of the $n - |R| = k$ empty rows contributes exactly one color-$0$ square to $V$; hence $N_0(V) = k$. Equation~\eqref{eq:Vq} gives $2 z_0 = k$, impossible as $k$ is odd.
+\end{proof}
+
+\begin{lemma}[NS-3: Even-Long, Odd-Short, $d = 2$ Parity Elimination]\label{lem:ns3}
+Let $n = 2k$ with $k$ odd. No dominating $k$-set has $w > h$ with $w$ even, $h$ odd, and $d_C = 2$ (nor the transpose $h > w$, $h$ even, $w$ odd, $d_R = 2$).
+\end{lemma}
+
+\begin{proof}
+Assume $w > h$, $w$ even, $h$ odd, $d_C = 2$. Then $d_R = d_T = d_S = 0$ and $\waste_V = 0$, so \eqref{eq:Vq} gives $N_q(V) = 2 z_q$ for both $q \in \{0,1\}$. Because $h = d - c$ is odd, $c \not\equiv d \pmod 2$, so every empty column contributes one color-$0$ and one color-$1$ square to $H$; thus $N_0(H) = N_1(H) = n - |C| = k + d_C = k + 2$, and exactly two corners have each color. Therefore $N_q(\Bd) = N_q(V) + N_q(H) - 2 = 2 z_q + k$, and \eqref{eq:Fq} yields
+\[
+  0 \le \waste_F^{(q)} = 4 z_q - (2 z_q + k) = 2 z_q - k \implies 2 z_q \ge k \qquad (q \in \{0,1\}).
+\]
+Since $k$ is odd, $z_0 \ge (k+1)/2$ and $z_1 \ge (k+1)/2$, contradicting $z_0 + z_1 = k$.
+\end{proof}
+
+\begin{lemma}[SQ-RC-Odd: Odd-Width Square Single Row/Column Deficit Elimination]\label{lem:sqrc}
+Let $n = 2k$ with $k$ odd. No dominating $k$-set has a square frame ($w = h$) of odd side length $w$ with deficit vector $(0,1,0,0)$ or $(1,0,0,0)$.
+\end{lemma}
+
+\begin{proof}
+By transpose symmetry assume $(d_R,d_C,d_T,d_S) = (0,1,0,0)$. By \eqref{eq:Htot}, $\waste_H = -2 + u_0+v_0 \ge 0$, forcing $u_0 = v_0 = 1$ and $\waste_H = 0$. Since $h = w$ is odd, $c \not\equiv d \pmod 2$, so every empty column contributes one color-$0$ and one color-$1$ square to $H$, giving $N_0(H) = N_1(H) = n - |C| = k + 1$. Moreover, $U$ has color $(a+c)\bmod2$ while $W$ has color $(a+c+w)\bmod2$, so $u_0$ and $v_0$ have opposite colors (one per color). With $d_T = d_S = 0$, $\waste_H^{(0)} = 0$ in \eqref{eq:Hq} yields $2 z_0 + 1 = k + 1$, i.e., $2 z_0 = k$, impossible since $k$ is odd.
+\end{proof}
+
+\section{Exhaustive color-split branch decomposition}\label{sec:branches}
+
+The cases surviving Lemmas~\ref{lem:ns1}--\ref{lem:sqrc} fall into
+five categories. The following branch conditions cover every candidate
+in those categories. We use $\oplus$ for addition modulo $2$. Write $p_a := a \bmod 2$, $p_c := c \bmod 2$, and whenever $w$ and $h$ are both even let $q_* := (p_a + p_c) \bmod 2$ be the common color of all four corners and $\bar{q}_* := 1 - q_*$.
+
+\subsection{Nonsquare cases}
+Normalize by transpose to $w > h$, so $d_R = d_T = d_S = 0$, $d_C \in \{0,1,2\}$, and $\waste_V^{(0)} = \waste_V^{(1)} = 0$.
+\begin{itemize}[leftmargin=1.8em,itemsep=3pt]
+  \item \textbf{$w$ odd} (survives only for $k$ even by Lemma~\ref{lem:ns2}): $2 z_q = N_q(V) = k$ forces $z_0 = z_1 = k/2$, so $|T_q| = |S_q| = k/2$ for both $q$, with $\waste_F \le 4 - 2 d_C$ (and $\waste_F = 0$ when $d_C = 2$).
+  \item \textbf{$w$ even, $h$ odd}: As in Lemma~\ref{lem:ns3}, $N_q(V) = 2 e_{p_a \oplus q}(R) = 2 z_q$ and $N_q(\Bd) = 2 z_q + k + d_C - 2$, giving
+  \[
+    \waste_F^{(q)} = 2 z_q - k - d_C + 2 \ge 0 \qquad (q \in \{0,1\}).
+  \]
+  Hence $z_0 \in [\lceil (k + d_C - 2)/2 \rceil,\; \lfloor (k - d_C + 2)/2 \rfloor]$ (at most $2$ values when $k$ is odd, at most $3$ when $k$ is even; reduced to $z_0 \le k - z_0$ when a color-flipping symmetry stabilizes the case). For each branch, $|T_q| = |S_q| = e_{p_a \oplus q}(R) = z_q$ are fixed constants, and whenever $2 z_q - k - d_C + 2 = 0$ we get $\waste_F^{(q)} = 0$.
+  \item \textbf{$w$ even, $h$ even}: Here $N_{\bar{q}_*}(V) = 2 e_{1-p_c}(R) = 2 z_{\bar{q}_*}$ and $N_{\bar{q}_*}(\Bd) = 2 e_{1-p_c}(R) + 2 e_{1-p_a}(C)$ (no corners). Setting $\Delta := z_{\bar{q}_*} - e_{1-p_a}(C)$ gives $\waste_F^{(\bar{q}_*)} = 2\Delta \ge 0$ and $\waste_F^{(q_*)} = 4 - 2 d_C - 2\Delta \ge 0$, forcing $\Delta \in \{0, \dots, 2 - d_C\}$. At $\Delta = 0$ we have $\waste_F^{(\bar{q}_*)} = 0$; at $\Delta = 2 - d_C$ we have $\waste_F^{(q_*)} = 0$.
+\end{itemize}
+
+\subsection{Square cases with \texorpdfstring{$\sum d = 2$}{total deficit 2}}
+The side inequalities leave only $(0,0,2,0)$, $(0,0,0,2)$,
+$(0,0,1,1)$, and $(1,1,0,0)$, subject to the bound $d_i\le k-1$.
+In each case \eqref{eq:Ftot}--\eqref{eq:Htot} force
+$u_0=v_0=1$ and zero border and side waste in both colors.
+
+\subsection{Square cases with \texorpdfstring{$(d_R,d_C,d_T,d_S) \in \{(0,1,0,0),(1,0,0,0)\}$}{one row or column deficit}}
+Assume $d_C = 1$ (transposing for $d_R = 1$). Then $u_0 = v_0 = 1$ and $\waste_H = 0$.
+\begin{itemize}[leftmargin=1.8em,itemsep=3pt]
+  \item \textbf{$w$ odd} (only $k$ even survives by Lemma~\ref{lem:sqrc}): $z_0 = z_1 = k/2$, $\waste_V^{(q)} = \waste_F^{(q)} = 1$ for both $q$.
+  \item \textbf{$w$ even}: From $\waste_H^{(\bar{q}_*)} = 0$ we obtain $z_{\bar{q}_*} = e_{1-p_a}(C)$. Letting $\Delta := z_{\bar{q}_*} - e_{1-p_c}(R)$, \eqref{eq:Vq} and \eqref{eq:Fq} give $\waste_V^{(\bar{q}_*)} = \waste_F^{(\bar{q}_*)} = 2\Delta \ge 0$ and $\waste_V^{(q_*)} = \waste_F^{(q_*)} = 2 - 2\Delta \ge 0$, forcing $\Delta \in \{0,1\}$. Thus color $\bar{q}_*$ (for $\Delta=0$) or color $q_*$ (for $\Delta=1$) has zero waste on $\Bd, V, H$.
+\end{itemize}
+
+\subsection{Square cases with \texorpdfstring{$(d_R,d_C,d_T,d_S) \in \{(0,0,0,1),(0,0,1,0)\}$}{one diagonal deficit}}
+Assume $d_S = 1$ (swapping $T \leftrightarrow S$ for $d_T = 1$). Every queen occupies a distinct $t$-diagonal ($|T_q| = z_q$), while exactly one $s$-diagonal of some color $q_{\mathrm{def}} \in \{0,1\}$ carries two queens ($|S_{q_{\mathrm{def}}}| = z_{q_{\mathrm{def}}} - 1$, $|S_{1-q_{\mathrm{def}}}| = z_{1-q_{\mathrm{def}}}$). Branching on $q_{\mathrm{def}} \in \{0,1\}$:
+\begin{itemize}[leftmargin=1.8em,itemsep=3pt]
+  \item \textbf{$w$ odd}: Let $\eta_q\in\{u_0,v_0\}$ be the occupancy indicator of the box diagonal of color $q$, and $q' = 1 - q_{\mathrm{def}}$. From \eqref{eq:Vq}, $2 z_{q_{\mathrm{def}}} - 1 + \eta_{q_{\mathrm{def}}} \ge k$ and $2 z_{q'} + \eta_{q'} \ge k$.
+  If $k$ is odd, this uniquely forces $z_{q_{\mathrm{def}}} = (k+1)/2$, $z_{q'} = (k-1)/2$, $\eta_{q'}=1$, and $\waste_F^{(q')} = \waste_V^{(q')} = \waste_H^{(q')} = 0$.
+  If $k$ is even, this uniquely forces $z_0 = z_1 = k/2$, $\eta_{q_{\mathrm{def}}}=1$, and $\waste_F^{(q_{\mathrm{def}})} = \waste_V^{(q_{\mathrm{def}})} = \waste_H^{(q_{\mathrm{def}})} = 0$.
+  In either case the remaining color has border waste $2$ and
+  side wastes equal to its box-diagonal indicator.
+  \item \textbf{$w$ even}: Both box diagonals have color $q_*$. Put $z=z_{\bar q_*}$,
+  $e_V=e_{1-p_c}(R)$, $e_H=e_{1-p_a}(C)$, and
+  $\epsilon=[q_{\mathrm{def}}=\bar q_*]$. No corner has color $\bar q_*$,
+  so \eqref{eq:Fq}--\eqref{eq:Hq} give
+  \begin{align*}
+    \waste_V^{(\bar q_*)}&=2z-\epsilon-2e_V,\\
+    \waste_H^{(\bar q_*)}&=2z-\epsilon-2e_H,\\
+    \waste_F^{(\bar q_*)}&=\waste_V^{(\bar q_*)}+\waste_H^{(\bar q_*)}.
+  \end{align*}
+  The two side wastes are at most $u_0+v_0-1\le1$.
+  If $\epsilon=0$, both are even and hence zero, as is the border waste
+  of color $\bar q_*$. Thus $e_V=e_H=z$, and $u_0+v_0\ge1$.
+  The color $q_*$ then has border waste $2$ and side wastes
+  $u_0+v_0-1$.
+  If $\epsilon=1$, both are odd and hence one. This forces
+  $u_0=v_0=1$, $e_V=e_H=z-1$, and zero waste of color $q_*$ on all
+  three sets. For $d_S=1$ the signed count difference is
+  $|T_{\bar q_*}|-1=|S_{\bar q_*}|=e_V=e_H$.
+  When $d_T=1$, the roles of $T$ and $S$ are exchanged.
+\end{itemize}
+
+\subsection{Square zero-deficit cases \texorpdfstring{($w = h$, $d_R=d_C=d_T=d_S=0$)}{}}\label{sec:sq0}
+The parity of the side length and of $k$ determines the branch parameters.
+
+\begin{proposition}[Color-Split Decomposition of Square Zero-Deficit Cases]\label{prop:sq0}
+Let $n = 2k$, $w = h$, and $d_R = d_C = d_T = d_S = 0$.
+\begin{enumerate}[label=(\alph*),leftmargin=2em,itemsep=3pt]
+  \item \textbf{$w$ odd, $k$ odd ($n \equiv 2 \pmod 4$):} Exactly one color $q_{\mathrm{small}} \in \{0,1\}$ has $z_{q_{\mathrm{small}}} = (k-1)/2$ and $z_{q_{\mathrm{big}}} = (k+1)/2$. The box diagonal of color $q_{\mathrm{small}}$ is forced occupied, and $\waste_F^{(q_{\mathrm{small}})} = \waste_V^{(q_{\mathrm{small}})} = \waste_H^{(q_{\mathrm{small}})} = 0$. (If a color-flipping symmetry stabilizes the case, it suffices to take $q_{\mathrm{small}} = 0$.)
+  \item \textbf{$w$ odd, $k$ even ($n \equiv 0 \pmod 4$):} Uniquely $z_0 = z_1 = k/2$. Branching on $(u_0, v_0) \in \{0,1\}^2$ (dropping $(0,1)$ when a stabilizer symmetry swaps $u_0 \leftrightarrow v_0$): for each color $q$ with box diagonal $\eta_q=0$, we have $\waste_V^{(q)} = \waste_H^{(q)} = 0$ and $\waste_F^{(q)} \le 2$; for each color $q$ with $\eta_q=1$, we have $\waste_V^{(q)} = 1$, $\waste_H^{(q)} = 1$, and moreover $\waste_F^{(q)} \equiv \waste_V^{(q)} + \waste_H^{(q)}$ identically.
+  \item \textbf{$w$ even:} Let $\Delta_V := z_{\bar{q}_*} - e_{1-p_c}(R)$ and $\Delta_H := z_{\bar{q}_*} - e_{1-p_a}(C)$. Then $\Delta_V, \Delta_H \in \{0,1\}$ and $u_0+v_0 \ge 2\max(\Delta_V, \Delta_H)$, yielding at most $7$ branches $(\Delta_V, \Delta_H, u_0, v_0)$ ($6$ when $g_4$ or $g_7$ stabilizes the case):
+  \[
+    (0,0,0,0),\; (0,0,1,0),\; (0,0,0,1),\; (0,0,1,1),\; (1,0,1,1),\; (0,1,1,1),\; (1,1,1,1).
+  \]
+  In every branch, at least one color has $\waste_V^{(q)} = 0$ and at least one color has $\waste_H^{(q)} = 0$; when $\Delta_V = \Delta_H = 0$, $\waste_F^{(\bar{q}_*)} = 0$; when $\Delta_V = \Delta_H = 1$, $\waste_F^{(q_*)} = 0$.
+\end{enumerate}
+\end{proposition}
+
+\begin{proof}
+In (a) and (b), each set of empty rows or columns contributes one
+square per color to its corresponding side. The four corners contribute
+two per color. Thus $N_q(V)=N_q(H)=k$ and $N_q(\Bd)=2k-2$.
+Let $\eta_q$ be the occupancy indicator of the unique box diagonal of
+color $q$. The two side inequalities read $2z_q+\eta_q\ge k$.
+For odd $k$ they force $z_q\ge(k-1)/2$ and hence a smaller and larger
+color of the sizes in (a). The smaller color needs $\eta_q=1$,
+giving zero side and border waste. The larger color has border
+waste $4$ and side wastes $1+\eta_q$. For even $k$ they force both
+$z_q=k/2$. In that case the side wastes equal $\eta_q$ and the border
+waste is $2$ in each color. Therefore the border waste equals the sum
+of the two side wastes when $\eta_q=1$, as claimed.
+
+In~(c), $N_{\bar{q}_*}(V) = 2 e_{1-p_c}(R)$ and both $u_0, v_0$ have color $q_*$, so $\waste_V^{(\bar{q}_*)} = 2\Delta_V \ge 0$ and $\waste_V^{(q_*)} = u_0+v_0 - 2\Delta_V \ge 0$, forcing $\Delta_V \in \{0,1\}$ and $u_0+v_0 \ge 2\Delta_V$. The identical argument on $H$ gives $\Delta_H \in \{0,1\}$ and $u_0+v_0 \ge 2\Delta_H$. Finally, $\waste_F^{(\bar{q}_*)} = 2(\Delta_V + \Delta_H)$ and $\waste_F^{(q_*)} = 4 - 2(\Delta_V + \Delta_H)$.
+\end{proof}
+
+\subsection{The unique monochromatic frame \texorpdfstring{$(0,1,0,1)$}{(0,1,0,1)} and pure-diagonal moments}\label{sec:mono}
+
+\begin{lemma}[Uniqueness of the Monochromatic Frame]\label{lem:mono}
+Suppose $n = 2k$, $w = h$ is even, $d_R = d_C = 0$, and $z_{\bar{q}_*} = 0$ (with $\Delta_V = \Delta_H = 0$ when $d_T = d_S = 0$, or $q_{\mathrm{def}} = q_*$ when $d_T + d_S = 1$). Then the canonical frame is uniquely $(m_l, m_r, m_b, m_t) = (0, 1, 0, 1)$, all $k$ empty rows and columns are $\{0, 2, \dots, n-2\}$, and all $k$ queens lie on odd-odd squares $\{(2i+1, 2j+1) : 0 \le i,j < k\}$, forming a permutation $j = \pi(i)$.
+\end{lemma}
+
+\begin{proof}
+Since $z_{\bar{q}_*} = 0$, we have $e_{1-p_c}(R) = e_{1-p_a}(C) = 0$, so all $k$ empty rows share parity $p_c$ and all $k$ empty columns share parity $p_a$. Because $\{0,\dots,2k-1\}$ contains exactly $k$ integers of each parity, the empty rows must be either $\{0,2,\dots,2k-2\}$ (margins $(0,1)$) or $\{1,3,\dots,2k-1\}$ (margins $(1,0)$), and similarly for the empty columns. The unique joint-$D_4$-canonical frame with these margins is $(0,1,0,1)$, forcing $p_a = p_c = 0$ and $R = C = \{1,3,\dots,2k-1\}$.
+\end{proof}
+
+A queen at $(2i+1,2j+1)$ lies on the shifted diagonals $t'=j-i$
+and $s'=i+j+1$. Write $T',S'$ for the corresponding occupied sets
+in $[-(k-1),k-1]$ and $[1,2k-1]$. The reduced grid has $k^2$ queen
+variables and gives the following \emph{diagonal moment identities}.
+\begin{align*}
+  d_T = 0 &\implies \sum_{t' \in T'} t' = 0, \qquad
+  d_S = 0 \implies \sum_{s' \in S'} s' = k^2, \\
+  d_T = d_S = 0 &\implies \sum_{t' \in T'} (t')^2 + \sum_{s' \in S'} (s' - 1)^2 = 4 \sum_{i=0}^{k-1} i^2 = \frac{2}{3}k(k-1)(2k-1).
+\end{align*}
+The two linear identities follow by summing $j-i$ and $i+j+1$
+over the permutation. With both diagonal deficits zero, each summand
+occurs once in its occupied family, and
+$(j-i)^2+(i+j)^2=2(i^2+j^2)$ gives the quadratic identity. With one
+diagonal deficit, we use the linear identity for the family with
+deficit zero. The implementation imposes the available identities
+modulo small integers; see Section~\ref{sec:encoding}.
+
+\begin{remark}
+The incidence identities of Theorem~\ref{thm:colorsplit} apply to odd
+boards as well. The subsequent branch enumeration and the computations
+reported here use $n=2k$.
+\end{remark}
+
+\section{SAT encoding and completeness}\label{sec:encoding}
+
+\begin{lemma}[Bounds for the parity counters]\label{lem:caps}
+Write $z=z_{\bar q_*}$ in an even-by-even frame. The parity
+equalities of Section~\ref{sec:branches} admit the following bounds.
+\begin{enumerate}[label=(\alph*),leftmargin=2em,itemsep=2pt]
+  \item For a nonsquare frame, $z\le k-2$.
+  \item For a square with one row or column deficit, $z\le k-1$.
+  \item For a square with one diagonal deficit, $z\le k-2$ when
+    $q_{\mathrm{def}}=q_*$, and $z-1\le k-2$ otherwise.
+  \item For a square with zero deficits,
+    $z\le k-2+\max(\Delta_V,\Delta_H)$.
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+A side of even length $\ell$ has exactly $\ell/2$ interior line
+indices of parity opposite to its endpoints. In (a) the shorter
+side is at most $2k-4$, and the number of empty lines of that parity
+on the shorter side equals $z$. In (b), the corresponding equality
+on the side with zero waste in both colors gives a bound of
+$w/2\le k-1$. In (c), a repeated diagonal of color $q_*$ uses two
+queens of that color. If the repeat is of the other color, both
+box diagonals are occupied, so at least one queen has color $q_*$.
+
+For (d), a needy corner requires at least one queen of color $q_*$.
+This gives $z\le k-1$ and suffices when either $\Delta$ is positive.
+When both vanish and $w\le 2k-4$, the side count suffices. The
+remaining frame has $w=2k-2$ and, up to symmetry, margins
+$(0,1,0,1)$. If $z=k-1$, all $k-1$ odd interior rows and columns
+are empty, leaving a single available odd index $2k-1$ in each
+direction. The queens in color $\bar q_*$ use exactly one odd
+coordinate each. At most two fit in distinct rows and columns.
+For $k\ge4$ this contradicts $z=k-1$. For $k=2$ both even indices
+are empty boundaries, making any such queen impossible. For $k=3$,
+the only available even index is $2$ in either direction. The two
+queens would be $(5,2)$ and $(2,5)$ on the same sum diagonal,
+contrary to zero deficit.
+\end{proof}
+
+\subsection{Board and auxiliary variables}
+
+The encoder gives a variable $Q_{xy}$ to each available square.
+The line occupancy variables are $o_R(y)$, $o_C(x)$, $o_T(t)$,
+and $o_S(s)$ for rows, columns, difference and sum diagonals.
+A line variable is true exactly when at least one of its square
+variables is true. It is false if no such variable exists.
+The four boundary lines are forced empty and the exterior rows and
+columns are forced occupied. Any square on a boundary line, or on
+a diagonal excluded by zero waste, has no queen variable. Every
+square in the closed frame has a clause requiring at least one of
+its four lines to be occupied. Exterior squares are covered by the
+occupied exterior rows or columns.
+
+The four families have occupancy counts $k-d_R,k-d_C,k-d_T,k-d_S$.
+When diagonal counts are specified separately by color, their sums
+give the same totals. A family with deficit zero also has an
+at-most-one constraint on the queens on each line. Since there is
+a zero-deficit family, these constraints force exactly $k$ queens.
+The branch conditions give counts of empty lines by parity, fixed
+occupancy of box diagonals where applicable, and bounds on waste.
+In the even-sided zero-deficit square, an inactive box diagonal
+forces the other diagonal at each of its two corners to be occupied.
+The count equalities use the caps of Lemma~\ref{lem:caps}, further
+lowered by the lengths of the parity lists with their stated offsets.
+
+At a border square $p$, let $N_p$ be its non-needy indicator. It is
+the row occupancy on a vertical side, the column occupancy on a
+horizontal side, and zero at a corner. For a waste bound, the
+geometric costs are repeated copies of the occupancy literal
+$o_L$, with multiplicity $2-\beta_{\Bd}(L)$ for the border or
+$[\beta_X(L)=0]$ on an applicable side $X$. The other auxiliary
+bits are $E_{L,p}$, forced true by $o_L\land N_p$, and $F_p$, forced
+true by $o_T\land o_S\land\neg N_p$ at $p$. A placement extends
+by setting the bits to the indicated conjunctions. If a color
+has zero waste on a side, its per-square terms vanish there
+also when calculating border waste. The encoder omits these
+terms and encodes zero bounds directly by forbidding each
+waste event. A bound such as $\waste_V^{(q)}\le u_0+v_0-1$
+is imposed by adding the two negative occupancy literals to
+the count and bounding the sum by one.
+
+Cardinality constraints use unary totalizers~\cite{BB2003}. Each
+bit of a count vector represents reaching a given threshold. For
+an upper bound, a child threshold implies the corresponding
+parent threshold, and two child thresholds imply their sum or
+are forbidden if it exceeds the bound. This suffices inductively
+to detect overflow. For equalities with an offset, reverse
+clauses additionally prevent a parent threshold above the true
+count, and the vectors are equated after the shift. An exact
+constant count is an upper bound on literals and an upper bound
+on their negations. Line constraints use pairwise exclusion or a
+sequential prefix counter~\cite{Sinz2005}; in the latter the
+auxiliary bit indicates whether an earlier prefix contains a queen.
+The threshold and prefix assignments from any placement
+satisfying the counts satisfy every counter clause.
+
+\subsection{Monochromatic formulas}
+
+The reduced encoder of Section~\ref{sec:mono} places one queen
+in each row and column of the odd-odd $k\times k$ grid, with
+occupancy bits for the shifted $t'$ and $s'$ diagonals. The only
+needy squares are $(2u,2v)$, with $0\le u,v<k$. The coverage clause
+at each is $o_T(v-u)\lor o_S(u+v)$ in the shifted indexing, with
+$o_S(0)=0$. In particular $o_T(0)=u_0=1$. If there is one diagonal
+deficit, the border waste is $2$ and each side waste equals
+$v_0=o_S(k-1)$, by \eqref{eq:Ftot}--\eqref{eq:Htot}. On the reduced
+frame $|t'|=k-1$ and $s'=2k-2$ have one border hit, and $s'=2k-1$
+has no border or side hit. Every other allocated diagonal has two
+border hits and meets both side sets. Every border square of the
+queen color is needy. These facts give the reduced waste
+bounds using only occupancy bits and the double-coverage bits.
+
+The moment identities are imposed modulo $3,4,5,7,8$, and also
+modulo $9$ in the zero-deficit case. At each term there is one bit
+per possible residue of the partial sum. The initial residue is
+zero, and the clauses enforce the update obtained by adding the
+term's weight when the input literal is true. The terminal residue
+must equal the target. The actual residues extend every permutation
+satisfying the identities. The transpose sends $t'$ to $-t'$ and
+fixes $s'$, so a lexicographic comparison of the corresponding
+difference-diagonal vectors may be imposed.
+
+\subsection{Coverage of the generated formulas}
+
+\begin{theorem}\label{thm:coverage}
+For $n=2k\ge4$, every dominating $k$-set has a dihedral image whose
+queen and occupancy indicators extend to a satisfying assignment
+of a generated formula. Conversely, every satisfying formula gives
+a dominating set of size $k$ on $Q_n$.
+\end{theorem}
+
+\begin{proof}
+Take a minimum case of the placement under the eight maps of
+Section~\ref{sec:prelim}. The generator enumerates nonnegative
+margin tuples satisfying \eqref{eq:margins} and $w,h\ge1$, and
+deficit tuples with each entry at most $k-1$ and sum at most two.
+Its side tests are the inequalities \eqref{eq:Vtot} and
+\eqref{eq:Htot} with $u_0+v_0$ replaced by its upper bound $2$.
+Hence the minimum case is enumerated. Lemmas~\ref{lem:ns1}--\ref{lem:sqrc}
+show that no algebraic pruning rule discards it.
+
+The actual parity counts and occupancy bits satisfy one of the
+branch descriptions. A color-flipping case stabilizer exchanges
+$z_0$ and $z_1$, exchanges the smaller color on an odd-sided
+zero-deficit square when $k$ is odd, and exchanges the two box
+diagonals there when $k$ is even. These are precisely the
+identifications used to omit a representative in those
+branches. Transposition and antitransposition interchange
+$\Delta_V,\Delta_H$ in an even-sided square and fix the box
+diagonals individually, justifying the omission of $(0,1,1,1)$
+when one of those maps stabilizes the case.
+
+For the two monochromatic patterns the conditions of
+Lemma~\ref{lem:mono} force the special frame $(0,1,0,1)$.
+The reduced encoder covers all such placements. The general
+branch at that frame for a diagonal deficit in $q_*$ and the
+zero-deficit branch $(0,0,1,1)$ both require $z_{\bar q_*}>0$,
+since their zero-count placements are covered by the reduced
+formula. For the other zero-deficit tuples, the generator can
+leave overlaps with the reduced formula. Every placement needs
+at least one formula.
+
+Within a general formula the encoder compares the combined row
+and column occupancy vector with its images under selected
+members of $\Stab(\kappa)$. Color-reversing maps are kept only
+when their action preserves the branch parameters. In the even-sided
+square, an exchange of sides is kept only when it preserves the
+fixed deficits and the ordered pair $(\Delta_V,\Delta_H)$ when
+present. This follows from the eight actions on lines above. The
+single-row-or-column-deficit even square uses only the half-turn.
+For each comparison, equality of the earlier entries forces
+the corresponding prefix bit, which activates the inequality at
+the next entry. Choose a placement with minimum occupancy vector in the
+orbit under the subgroup generated by the selected maps. It satisfies
+every such comparison.
+The reduced formula uses the analogous minimum under transpose.
+
+The resulting placement satisfies the coverage and cardinality
+constraints. The branch restrictions follow from the incidence
+identities, Lemma~\ref{lem:caps}, and the monochromatic moment
+identities where applicable. Its actual occupancy, waste counts,
+counter thresholds, and residues provide the auxiliary assignment.
+Conversely, a satisfying assignment defines a dominating set by
+the occupancy and coverage clauses, with exactly $k$ queens by
+the zero-deficit family or the reduced permutation constraints.
+\end{proof}
+
+\section{Computations and verification}\label{sec:results}
+
+\subsection{Archived runs and replay}
+
+Table~\ref{tab:certified} reports the original runs. In certification
+mode each worker writes the DIMACS formula, hashes it with SHA-256,
+and asks CaDiCaL to write a binary DRAT proof. The unmodified
+\texttt{drat-trim} checker~\cite{DRATtrim} checks the formula and
+proof. The driver records the solver verdict and checker status
+before deleting temporary proof and formula files. All archived
+lower-bound records report UNSAT and a successful DRAT check.
+
+\begin{table}[!htbp]
+\centering\small
+\caption{Archived even-board runs. Solve and check columns sum
+  elapsed seconds across leaves. Wall time measures the worker
+  phase. Proof sizes are decimal gigabytes generated during a run.}
+\label{tab:certified}
+\setlength{\tabcolsep}{5pt}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{}rrrrrrrrr@{}}
+\toprule
+$n$ & $k$ & Canonical & Pruned & Leaves & Solve (s) & Check (s) & Wall (s) & DRAT (GB) \\
+\midrule
+50 & 25 & 54\,626 & 44\,288 & 19\,090 & 2\,021.14 & 2\,415.24 & 532.63 & 2.69 \\
+52 & 26 & 63\,119 & 43\,354 & 30\,814 & 6\,086.83 & 5\,170.79 & 1\,286.19 & 6.21 \\
+54 & 27 & 72\,268 & 59\,164 & 24\,251 & 3\,034.71 & 3\,652.80 & 807.08 & 4.35 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+A separate Python program re-enumerates the canonical cases, pruning
+counts, and expected branch tags. It matches them to the audit
+records and checks the upper-bound witnesses directly. As part
+of revision, we regenerated the DIMACS fingerprints of all
+$74\,155$ leaves with the pinned encoder. The archival hashes agree
+for $19\,088$ of $19\,090$ leaves at $n=50$, and for every leaf at
+$n=52$ and $n=54$. The two $n=50$ differences are the
+one-diagonal-deficit monochromatic formulas. Omitting the later
+border-waste clauses reproduces the two archival hashes.
+We regenerated and checked DRAT proofs for both current formulas
+and retained the resulting pairs. A sample replay checked $34$,
+$42$, and $34$ leaves on the three boards, including one of the
+two changed formulas at $n=50$.
+
+The JSONL files are audit summaries recording checks performed
+during the original runs and the targeted replay. Most original
+proofs were deleted and can be regenerated from the pinned encoder.
+The retained pairs can be checked directly. The revision did not
+replay a fresh proof for every leaf. The mathematical argument
+depends on coverage of the case split and the correctness of the
+encoding. The computational evidence depends on the recorded
+DRAT checks and their association with the formulas. Proof
+checking can be repeated without relying on CaDiCaL's verdicts.
+
+\subsection{Timing and controlled benchmark}
+
+In the archived logs the fields \texttt{solve\_cpu\_s} and
+\texttt{check\_cpu\_s} sum elapsed times across workers, measured
+by \texttt{std::chrono::steady\_clock}. The revised driver names
+them \texttt{solve\_elapsed\_sum\_s} and
+\texttt{check\_elapsed\_sum\_s}. Solve time measures the
+\texttt{solve()} call, including DRAT trace output during the call.
+Checker time includes process startup, proof checking, and the wait
+for the checker to exit. Worker wall time includes encoding, file
+operations, solving, and checking, and excludes case enumeration
+and ordering. A sum over workers may exceed wall time.
+
+The pinned reproduction uses CaDiCaL 3.1.0~\cite{CaDiCaL} and
+the \texttt{drat-trim} revision given in the repository. The
+checker is run in backward mode with binary proof input and the
+options \texttt{-w -t 1000000}. The solver's \texttt{auto} mode
+uses CaDiCaL's \texttt{unsat} configuration for the branches
+marked in the source and the default configuration otherwise.
+The historical runs were reported on a ten-core Apple M4.
+Their log schema records certification, algebraic pruning, and
+symmetry breaking. It lacks version, configuration, and worker
+count fields, so the revision pins the environment used for replay.
+
+For a controlled measurement on one Apple M4, we used one worker,
+the pinned tools, and \texttt{auto} configuration. We chose up to
+12 leaves per branch type for $n=26$ by smallest SHA-256 tag
+digest, giving 99 leaves. Three runs per mode alternated which
+mode went first. The median worker wall times were $0.33$\,s
+without proofs and $3.35$\,s with proof generation and checking.
+Median solver-call times summed to $0.18$\,s and $0.19$\,s,
+respectively. In certified mode the median sum for the checker
+was $2.88$\,s, including one invocation per leaf. All 99
+proofs passed in each certified repeat. These times describe
+certification overhead on that sample.
+
+Davies~\cite[Section~4, Table~2]{Davies2026} reports single-core
+solver and checker seconds on a shared machine running four to
+six processes. His even-board runs used the default CaDiCaL
+3.1.0 configuration without symmetry-breaking clauses or
+cubing. Those measurements and the elapsed times above have
+different timing definitions and execution environments.
+
+\section{Explicit upper-bound witnesses}\label{sec:witnesses}
+
+Coordinates are $(x,y)=(\text{column},\text{row})$ and are indexed
+from zero. The witness search used permutations on odd-odd squares
+plus one additional queen. The verifier confirms the size of each
+listed set and checks every square for coverage. For the sets in
+Theorem~\ref{thm:indep} it also checks that all four line families
+have distinct indices across the queens.
+
+\paragraph{Dominating sets for Theorem~\ref{thm:main}.}
+\begin{itemize}[leftmargin=1.6em,itemsep=4pt]
+  \item \textbf{$Q_{50}$ ($26$ queens):}
+  $(0,0)$, $(1,3)$, $(3,35)$, $(5,25)$, $(7,15)$, $(9,9)$, $(11,39)$, $(13,49)$, $(15,19)$, $(17,27)$, $(19,11)$, $(21,45)$, $(23,29)$, $(25,1)$, $(27,21)$, $(29,41)$, $(31,47)$, $(33,23)$, $(35,7)$, $(37,17)$, $(39,37)$, $(41,5)$, $(43,31)$, $(45,13)$, $(47,43)$, $(49,33)$.
+  \item \textbf{$Q_{52}$ ($27$ queens):}
+  $(0,0)$, $(1,15)$, $(3,29)$, $(5,43)$, $(7,37)$, $(9,41)$, $(11,45)$, $(13,11)$, $(15,7)$, $(17,19)$, $(19,1)$, $(21,25)$, $(23,31)$, $(25,3)$, $(27,49)$, $(29,39)$, $(31,27)$, $(33,51)$, $(35,5)$, $(37,23)$, $(39,33)$, $(41,47)$, $(43,9)$, $(45,35)$, $(47,21)$, $(49,17)$, $(51,13)$.
+  \item \textbf{$Q_{54}$ ($28$ queens):}
+  $(0,0)$, $(1,13)$, $(3,53)$, $(5,25)$, $(7,15)$, $(9,37)$, $(11,23)$, $(13,45)$, $(15,51)$, $(17,1)$, $(19,7)$, $(21,17)$, $(23,47)$, $(25,27)$, $(27,21)$, $(29,35)$, $(31,29)$, $(33,49)$, $(35,39)$, $(37,5)$, $(39,11)$, $(41,3)$, $(43,19)$, $(45,9)$, $(47,31)$, $(49,41)$, $(51,43)$, $(53,33)$.
+\end{itemize}
+
+\paragraph{Independent dominating sets for Theorem~\ref{thm:indep}.}
+Each set below is pairwise non-attacking (distinct rows, columns, difference diagonals, and sum diagonals) and dominates all $n^2$ squares:
+\begin{itemize}[leftmargin=1.6em,itemsep=4pt]
+  \item \textbf{$Q_{32}$ ($17$ queens, $i(Q_{32})=17$):}
+  $(1,25)$, $(2,2)$, $(3,19)$, $(5,9)$, $(7,27)$, $(9,1)$, $(11,17)$, $(13,11)$, $(15,3)$, $(17,29)$, $(19,21)$, $(21,15)$, $(23,31)$, $(25,5)$, $(27,23)$, $(29,13)$, $(31,7)$.
+  \item \textbf{$Q_{34}$ ($18$ queens, $i(Q_{34})=18$):}
+  $(0,32)$, $(1,9)$, $(3,19)$, $(5,25)$, $(7,31)$, $(9,5)$, $(11,17)$, $(13,11)$, $(15,3)$, $(17,29)$, $(19,21)$, $(21,15)$, $(23,27)$, $(25,1)$, $(27,7)$, $(29,13)$, $(31,23)$, $(33,33)$.
+  \item \textbf{$Q_{38}$ ($20$ queens, $i(Q_{38})=20$):}
+  $(1,19)$, $(3,11)$, $(4,34)$, $(5,27)$, $(7,5)$, $(9,35)$, $(11,13)$, $(13,17)$, $(15,1)$, $(17,31)$, $(19,15)$, $(21,21)$, $(23,33)$, $(25,3)$, $(27,9)$, $(29,23)$, $(31,37)$, $(33,7)$, $(35,25)$, $(37,29)$.
+  \item \textbf{$Q_{40}$ ($21$ queens, $i(Q_{40})=21$):}
+  $(0,38)$, $(1,35)$, $(3,19)$, $(5,13)$, $(7,7)$, $(9,1)$, $(11,23)$, $(13,37)$, $(15,29)$, $(17,15)$, $(19,39)$, $(21,5)$, $(23,17)$, $(25,27)$, $(27,3)$, $(29,33)$, $(31,11)$, $(33,21)$, $(35,31)$, $(37,9)$, $(39,25)$.
+  \item \textbf{$Q_{44}$ ($23$ queens, $i(Q_{44})=23$):}
+  $(0,42)$, $(1,37)$, $(3,13)$, $(5,7)$, $(7,25)$, $(9,31)$, $(11,41)$, $(13,11)$, $(15,19)$, $(17,43)$, $(19,1)$, $(21,35)$, $(23,23)$, $(25,3)$, $(27,17)$, $(29,21)$, $(31,5)$, $(33,39)$, $(35,29)$, $(37,33)$, $(39,9)$, $(41,27)$, $(43,15)$.
+\end{itemize}
+
+\section{Code and data availability}\label{sec:data}
+
+The encoder, checker wrapper, audit logs, retained proof pairs, and
+witness coordinates are available in the
+\href{https://github.com/CosmicCrusader23/queens}{public repository}.
+
+Use revision
+\href{https://github.com/CosmicCrusader23/queens/tree/\ReproCommit}{\texttt{\ReproCommit}}.
+The \href{https://github.com/CosmicCrusader23/queens/blob/\ReproCommit/README.md}{reproduction instructions}
+give the build commands and dependency hashes, the archive audit,
+the direct check of the retained pairs, and a full regeneration
+procedure. The tested environment was macOS on Apple silicon with
+Clang~17, C++20, and Python~3.14. The Python scripts use the standard
+library.
+
+After building, run \texttt{queen\_prover} with \texttt{--certify},
+\texttt{--config auto}, and \texttt{--n} set to 50, 52, or 54. Use
+\texttt{--out} to save each log and run \texttt{verify\_certificate.py}
+on it. The expected checked counts are $19\,090$, $30\,814$, and
+$24\,251$. Use \texttt{--proof-dir} to retain the CNF and DRAT files.
+For all three boards, the original proof data totalled about
+$13.25$\,GB before deletion. Runtimes and retained sizes can vary.
+The witness check takes only the listed coordinates as input.
+
+\section{AI provenance}\label{sec:provenance}
+
+Gemini 4 Neon, used through Google Antigravity, carried out the
+original research, computations, coding, and drafting. The human
+author selected and coordinated the project. OpenAI Codex assisted
+with the adversarial review, reproduction checks, and revision
+reported here. Sections~\ref{sec:encoding} and~\ref{sec:results}
+describe the analytical and computational checks.
+
+\clearpage
+\begin{thebibliography}{99}
+\small
+\raggedright
+\setlength{\itemsep}{4pt plus 1pt}
+
+\bibitem{Hint2026}
+Anonymous,
+\emph{Hint and Conquer: New Queen Domination Numbers by SAT Solving},
+preprint, 2026.
+\href{https://github.com/TahaRostami/Gamma/blob/hint-and-conquer/doc.pdf}{Manuscript on the \texttt{hint-and-conquer} branch}.
+
+\bibitem{BB2003}
+O.~Bailleux and Y.~Boufkhad,
+\emph{Efficient CNF encoding of Boolean cardinality constraints},
+in: Principles and Practice of Constraint Programming (CP 2003),
+Lecture Notes in Comput.\ Sci.\ \textbf{2833}, Springer, 2003,
+pp.~108--122.
+\href{https://doi.org/10.1007/978-3-540-45193-8_8}{DOI}.
+
+\bibitem{CaDiCaL}
+A.~Biere, T.~Faller, K.~Fazekas, M.~Fleury, N.~Froleyks, and F.~Pollitt,
+\emph{CaDiCaL~2.0},
+in: Computer Aided Verification (CAV 2024),
+Lecture Notes in Comput.\ Sci.\ \textbf{14681}, Springer, 2024,
+pp.~133--152.
+\href{https://doi.org/10.1007/978-3-031-65627-9_7}{DOI}.
+
+\bibitem{Cockayne1990}
+E.~J.~Cockayne,
+\emph{Chessboard domination problems},
+Discrete Math.\ \textbf{86} (1990), 13--20.
+\href{https://doi.org/10.1016/0012-365X(90)90344-H}{DOI}.
+
+\bibitem{Davies2026}
+J.~Davies,
+\emph{$\gamma(Q_{35})=19$ and certified queen domination numbers up to $n=46$},
+Hexagon Math, 2026.
+\href{https://hexagonmath.org/2611.00830v1}{2611.00830v1}.
+
+\bibitem{Djukic2026}
+A.~\DJ uki\'c,
+comment on $\gamma(Q_{48})$ in OEIS sequence A075458,
+November 22, 2026.
+\href{https://oeis.org/A075458}{Sequence}
+and \href{https://oeis.org/A075458/a075458_1.txt}{computation summary and witness}.
+
+\bibitem{Neuhaus2009}
+S.~Neuhaus,
+\emph{Eigenschaften kleinster dominierender Mengen und Dominanzzahlen von Damengraphen},
+Ph.D.\ dissertation, Universit\"at zu K\"oln, 2009.
+\href{https://kups.ub.uni-koeln.de/2916/}{University repository}.
+
+\bibitem{OW2001}
+P.~R.~J.~\"Osterg\aa rd and W.~D.~Weakley,
+\emph{Values of domination numbers of the queen's graph},
+Electron.\ J.\ Combin.\ \textbf{8}(1) (2001), \#R29.
+\href{https://doi.org/10.37236/1573}{DOI}.
+
+\bibitem{RV1987}
+V.~Raghavan and S.~M.~Venkatesan,
+\emph{On bounds for a board covering problem},
+Inform.\ Process.\ Lett.\ \textbf{25}(5) (1987), 281--284.
+\href{https://doi.org/10.1016/0020-0190(87)90201-8}{DOI}.
+
+\bibitem{Sinz2005}
+C.~Sinz,
+\emph{Towards an optimal CNF encoding of Boolean cardinality constraints},
+in: Principles and Practice of Constraint Programming (CP 2005),
+Lecture Notes in Comput.\ Sci.\ \textbf{3709}, Springer, 2005,
+pp.~827--831.
+\href{https://doi.org/10.1007/11564751_73}{DOI}.
+
+\bibitem{Weakley2022}
+W.~D.~Weakley,
+\emph{Queen domination of even square boards},
+Electron.\ J.\ Combin.\ \textbf{29}(2) (2022), \#P2.50.
+\href{https://doi.org/10.37236/10617}{DOI}.
+
+\bibitem{DRATtrim}
+N.~Wetzler, M.~J.~H.~Heule, and W.~A.~Hunt~Jr.,
+\emph{DRAT-trim: Efficient checking and trimming using expressive clausal proofs},
+in: Theory and Applications of Satisfiability Testing (SAT 2014),
+Lecture Notes in Comput.\ Sci.\ \textbf{8561}, Springer, 2014,
+pp.~422--429.
+\href{https://doi.org/10.1007/978-3-319-09284-3_31}{DOI}.
+
+\end{thebibliography}
+
+\end{document}
