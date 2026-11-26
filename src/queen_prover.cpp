@@ -24,6 +24,7 @@
 #include <charconv>
 #include <chrono>
 #include <cmath>
+#include <csignal>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
@@ -48,6 +49,12 @@ extern char** environ;
 namespace {
 
 using Clock = std::chrono::steady_clock;
+
+volatile std::sig_atomic_t g_signal_stop = 0;
+
+void handle_stop_signal(int) {
+    g_signal_stop = 1;
+}
 
 struct Case {
     int ml, mr, mb, mt;
@@ -207,7 +214,8 @@ std::vector<WorkItem> expand_case(int n, int k, const Case& c) {
     }
 
     if (sd == 2) {
-        out.push_back({c, BranchKind::SQ_DEF2, 0, 0, 0, 0, 0, 15});
+        bool mono_frame = (c.ml == 0 && c.mr == 1 && c.mb == 0 && c.mt == 1);
+        out.push_back({c, BranchKind::SQ_DEF2, 0, 0, 0, 0, 0, mono_frame ? 130 : 15});
         return out;
     }
 
@@ -228,7 +236,7 @@ std::vector<WorkItem> expand_case(int n, int k, const Case& c) {
                 int q_star = (c.ml + c.mb) & 1;
                 bool mono_possible = (c.ml == 0 && c.mr == 1 && c.mb == 0 && c.mt == 1);
                 if (mono_possible) {
-                    out.push_back({c, BranchKind::SQ_DEF1_TS_MONO, 0, 0, 0, 0, 0, 85});
+                    out.push_back({c, BranchKind::SQ_DEF1_TS_MONO, 0, 0, 0, 0, 0, 135});
                     out.push_back({c, BranchKind::SQ_DEF1_TS_EVEN, q_star, 1, 0, 0, 0, 80});
                 } else {
                     out.push_back({c, BranchKind::SQ_DEF1_TS_EVEN, q_star, 0, 0, 0, 0, 75});
@@ -257,7 +265,7 @@ std::vector<WorkItem> expand_case(int n, int k, const Case& c) {
     } else {
         bool mono_possible = (c.ml == 0 && c.mr == 1 && c.mb == 0 && c.mt == 1);
         if (mono_possible) {
-            out.push_back({c, BranchKind::SQ0_MONO_M, 0, 0, 0, 0, 0, 110});
+            out.push_back({c, BranchKind::SQ0_MONO_M, 0, 0, 0, 0, 0, 125});
             out.push_back({c, BranchKind::SQ0_EVEN_W, 0, 0, 1, 1, 1, 115});
         } else {
             out.push_back({c, BranchKind::SQ0_EVEN_W, 0, 0, 1, 1, 0, 105});
@@ -1613,10 +1621,13 @@ int main(int argc, char** argv) {
     pid_t pid = getpid();
     size_t total_work = work.size();
 
+    std::signal(SIGTERM, handle_stop_signal);
+    std::signal(SIGINT, handle_stop_signal);
+
     auto worker = [&](int tid) {
         const std::string worker_prefix = tmp_dir + "/qp_" + std::to_string(pid) + "_" + std::to_string(tid);
 
-        while (!stop_flag.load(std::memory_order_relaxed)) {
+        while (!stop_flag.load(std::memory_order_relaxed) && !g_signal_stop) {
             size_t idx = next_idx.fetch_add(1, std::memory_order_relaxed);
             if (idx >= total_work) break;
             const WorkItem& wi = work[idx];
@@ -1695,8 +1706,14 @@ int main(int argc, char** argv) {
             }
 
             if (certify && proof_dir.empty()) {
-                std::remove(cnf_path.c_str());
-                std::remove(drat_path.c_str());
+                if (res == 20 && drat_ok) {
+                    std::remove(cnf_path.c_str());
+                    std::remove(drat_path.c_str());
+                } else {
+                    const std::string keep_prefix = tmp_dir + "/investigate_" + wi.tag();
+                    std::rename(cnf_path.c_str(), (keep_prefix + ".cnf").c_str());
+                    std::rename(drat_path.c_str(), (keep_prefix + ".drat").c_str());
+                }
             }
 
             size_t d_now = done_cnt.fetch_add(1, std::memory_order_relaxed) + 1;
@@ -1723,7 +1740,7 @@ int main(int argc, char** argv) {
                                << ",\"drat\":\"" << (drat_ok ? "VERIFIED" : "FAILED") << "\""
                                << ",\"t_check\":" << std::fixed << std::setprecision(4) << t_check;
                     }
-                    out_fs << "}\n";
+                    out_fs << "}\n" << std::flush;
                 }
                 if (d_now % 2500 == 0 || d_now == total_work) {
                     double wall = std::chrono::duration<double>(Clock::now() - t_wall0).count();
