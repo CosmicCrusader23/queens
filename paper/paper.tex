@@ -111,21 +111,15 @@
 \maketitle
 
 \begin{abstract}
-We determine the domination number $\gamma(Q_n)$ of the queen's graph for
-every even board size $50\le n\le64$, obtaining $\gamma(Q_n)=n/2+1$ for
-$n=50,52,54,56,58,60,62,64$ (values $26,27,28,29,30,31,32,33$). For each
-lower bound we group candidate placements by the frame of their outermost
-empty lines and refine the frame and side counting identities by
-chessboard parity. Algebraic tests discard $68.7\%$--$83.2\%$ of
-canonical cases, and all $290\,542$ remaining Boolean formulas across
-the eight boards are refuted with binary DRAT proofs ($80.34$\,GB
-cumulative) checked by unmodified \texttt{drat-trim}. Explicit placements
-attain all eight upper bounds; the placement for $Q_{60}$ is pairwise
-non-attacking, additionally certifying the independent domination number
-$i(Q_{60})=31$. We also supply explicit checked witnesses for five
-previously reported independent domination numbers ($n=32,34,38,40,44$)
-and document the observed memory, temporary storage, and single-leaf
-bottlenecks governing scalability beyond $n=64$.
+For the queen's graph $Q_n$ on every even board with $50\le n\le64$,
+we prove that its domination and independent domination numbers satisfy
+$\gamma(Q_n)=i(Q_n)=n/2+1$. For the lower bounds, we split placements
+by their outermost empty rows and columns, refine the frame counts by
+chessboard parity, and refute all $290\,542$ resulting SAT formulas
+with DRAT proofs checked by \texttt{drat-trim}. The same eight lower
+bounds give the independent values using the published constructions
+of \"Osterg\aa rd and Weakley. We also give an independent $31$-queen
+placement on $Q_{60}$ and document the resource use of the certifications.
 \end{abstract}
 
 \section{Introduction}\label{sec:intro}
@@ -137,33 +131,36 @@ set that occupies or attacks every square. The independent domination
 number $i(Q_n)$ imposes the additional condition that its queens are
 pairwise non-attacking. Thus $\gamma(Q_n)\le i(Q_n)$. The sequences are
 indexed as \href{https://oeis.org/A075458}{A075458} and
-\href{https://oeis.org/A075324}{A075324} in the OEIS.
+\href{https://oeis.org/A075324}{A075324} in the OEIS. The problems
+appear as Problem~C18 in Guy~\cite{Guy1994} and go back to de~Jaenisch's
+1863 appendix~\cite[2017 corrigendum]{OW2001}.
 
 For even $n$, Spencer's bound as reported by Cockayne~\cite{Cockayne1990}
 and the bound of Raghavan and Venkatesan~\cite{RV1987} give
-$\gamma(Q_n)\ge n/2$. For even $26\le n\le120$, the upper bounds of
-\"Osterg\aa rd and Weakley~\cite{OW2001} leave the two possibilities
-$n/2$ and $n/2+1$. Weakley~\cite{Weakley2022} analyzed the chessboard
-parity split of $n/2$-queen dominating sets on even boards, bounding the
-color imbalance of bichromatic placements and studying monochromatic
-placements.
+$\gamma(Q_n)\ge n/2$. For even $26\le n\le120$, the independent upper bounds
+of \"Osterg\aa rd and Weakley~\cite[Section~5]{OW2001}, also summarized
+by Weakley~\cite[Proposition~21]{Weakley2022}, give $i(Q_n)\le n/2+1$.
+Weakley~\cite[Sections~2--3]{Weakley2022} studied the two chessboard colors
+in $n/2$-queen dominating sets, obtaining balance conditions for
+bichromatic placements and exclusions for monochromatic ones.
 
-Neuhaus~\cite[Section~2.4]{Neuhaus2009} reported integer-programming
-results for ordinary and independent domination on even boards through
-$n=46$ (as well as selected larger boards, without independently
-checkable proof certificates).
-\emph{Hint and Conquer}~\cite{Hint2026} splits the search by the
-outermost empty rows and columns, using diagonal-coverage constraints
-on the resulting frame to certify even boards through $n=38$.
-Davies~\cite[Sections 2 and 4]{Davies2026} refined the split by the four
-deficits in occupied line counts and obtained DRAT-certified ordinary
-domination numbers through $n=46$. \DJ uki\'c~\cite{Djukic2026} reported
-a DRAT-certified frame computation for $n=48$. All even boards
-$50\le n\le64$ remained open in OEIS~\href{https://oeis.org/A075458}{A075458}.
-Here we refine the frame and side identities by chessboard parity,
-account for case and branch symmetries separately, and certify all eight
-even boards $n=50,52,54,56,58,60,62,64$, completing certified values of
-$\gamma(Q_n)$ for every even $n\le64$.
+Neuhaus~\cite[Section~2.4 and Chapter~4]{Neuhaus2009} reported
+integer-programming results for several even boards through $n=46$
+and for selected larger boards, and analyzed frame sides and their
+excess diagonal coverage by parity. \emph{Hint and Conquer}~\cite{Hint2026} splits the search by
+the outermost empty rows and columns and uses side-counting constraints
+to certify even values through $n=38$. The \texttt{BSC} Lean development
+for $Q_{26}$~\cite{BSC2026} also uses parity and polynomial identities.
+Davies~\cite[Sections~2 and~4]{Davies2026} refined the frame split by
+the four occupied-line deficits and certified further even values through $n=46$.
+\DJ uki\'c~\cite{Djukic2026} reported a DRAT-certified frame computation
+for $n=48$.
+
+The published bounds above leave $\gamma(Q_n)\in\{n/2,n/2+1\}$
+on the eight boards considered here. We split the border and side
+identities by chessboard color, use the margin reachability and
+Hall-type capacity conditions of Lemma~\ref{lem:ns1}, and account
+for symmetries of cases and branches separately.
 
 \begin{theorem}\label{thm:main}
 For every even $n\in\{50,52,54,56,58,60,62,64\}$, no $n/2$ queens
@@ -187,16 +184,26 @@ boards. The explicit placements in Section~\ref{sec:witnesses} give the
 matching upper bounds.
 \end{proof}
 
-\begin{corollary}\label{cor:indep60}
-The independent domination number of $Q_{60}$ is $i(Q_{60})=31$.
+\begin{corollary}\label{cor:indep}
+For every even $50\le n\le64$, one has $i(Q_n)=n/2+1$. In order of
+board size, the eight values are $26,27,28,29,30,31,32,33$.
 \end{corollary}
 
 \begin{proof}
-By Theorem~\ref{thm:main}, $i(Q_{60})\ge\gamma(Q_{60})=31$. The explicit
-$31$-queen dominating placement for $Q_{60}$ in Section~\ref{sec:witnesses}
-has pairwise distinct rows, columns, difference diagonals, and sum
-diagonals, giving $i(Q_{60})\le31$.
+Theorem~\ref{thm:main} gives $\gamma(Q_n)=n/2+1$.
+The independent placements of \"Osterg\aa rd and Weakley
+\cite[Section~5, p.~11]{OW2001} give $i(Q_n)\le n/2+1$ on these boards,
+as also summarized by Weakley~\cite[Proposition~21]{Weakley2022}.
+Hence $n/2+1=\gamma(Q_n)\le i(Q_n)\le n/2+1$.
 \end{proof}
+
+The corollary uses the eight lower-bound computations of
+Theorem~\ref{thm:main}. Section~\ref{sec:witnesses} gives another
+independent placement on $Q_{60}$. The same comparison with
+the published independent upper bounds gives $i(Q_n)=n/2+1$
+for even $32\le n\le48$, using the ordinary values in
+\emph{Hint and Conquer}~\cite{Hint2026}, Davies~\cite{Davies2026},
+and \DJ uki\'c~\cite{Djukic2026}.
 
 \begin{theorem}[Neuhaus~\cite{Neuhaus2009}]\label{thm:indep}
 The independent domination numbers satisfy
@@ -549,7 +556,11 @@ In~(c), $N_{\bar{q}_*}(V) = 2 e_{1-p_c}(R)$ and both $u_0, v_0$ have color $q_*$
 
 \subsection{The unique monochromatic frame \texorpdfstring{$(0,1,0,1)$}{(0,1,0,1)} and pure-diagonal moments}\label{sec:mono}
 
-\begin{lemma}[Uniqueness of the Monochromatic Frame]\label{lem:mono}
+Weakley~\cite[Proposition~13]{Weakley2022} gives the row and column
+structure of monochromatic dominating sets. The following lemma
+identifies the corresponding frame in the case enumeration.
+
+\begin{lemma}[Uniqueness of the monochromatic frame]\label{lem:mono}
 Suppose $n = 2k$, $w = h$ is even, $d_R = d_C = 0$, and $z_{\bar{q}_*} = 0$ (with $\Delta_V = \Delta_H = 0$ when $d_T = d_S = 0$, or $q_{\mathrm{def}} = q_*$ when $d_T + d_S = 1$). Then the canonical frame is uniquely $(m_l, m_r, m_b, m_t) = (0, 1, 0, 1)$, all $k$ empty rows and columns are $\{0, 2, \dots, n-2\}$, and all $k$ queens lie on odd-odd squares $\{(2i+1, 2j+1) : 0 \le i,j < k\}$, forming a permutation $j = \pi(i)$.
 \end{lemma}
 
@@ -557,10 +568,10 @@ Suppose $n = 2k$, $w = h$ is even, $d_R = d_C = 0$, and $z_{\bar{q}_*} = 0$ (wit
 Since $z_{\bar{q}_*} = 0$, we have $e_{1-p_c}(R) = e_{1-p_a}(C) = 0$, so all $k$ empty rows share parity $p_c$ and all $k$ empty columns share parity $p_a$. Because $\{0,\dots,2k-1\}$ contains exactly $k$ integers of each parity, the empty rows must be either $\{0,2,\dots,2k-2\}$ (margins $(0,1)$) or $\{1,3,\dots,2k-1\}$ (margins $(1,0)$), and similarly for the empty columns. The unique joint-$D_4$-canonical frame with these margins is $(0,1,0,1)$, forcing $p_a = p_c = 0$ and $R = C = \{1,3,\dots,2k-1\}$.
 \end{proof}
 
-A queen at $(2i+1,2j+1)$ lies on the shifted diagonals $t'=j-i$
-and $s'=i+j+1$. Write $T',S'$ for the corresponding occupied sets
-in $[-(k-1),k-1]$ and $[1,2k-1]$. The reduced grid has $k^2$ queen
-variables and gives the following \emph{diagonal moment identities}.
+The $k^2$-variable grid has shifted diagonal indices $t'=j-i$
+and $s'=i+j+1$. Let $T',S'$ be their occupied index sets. The linear
+constraints and Parallelogram Law in \cite[Theorem~4 and Eq.~(3)]{OW2001}
+and \cite[Eqs.~(1)--(2)]{Weakley2022} give the shifted identities
 \begin{align*}
   d_T = 0 &\implies \sum_{t' \in T'} t' = 0, \qquad
   d_S = 0 \implies \sum_{s' \in S'} s' = k^2, \\
@@ -892,13 +903,12 @@ $n$ & Peak RSS & Peak temp & Min free & Largest proof leaf & Leaf solve & Leaf c
 \end{table}
 
 \paragraph{Observed computational bottlenecks and scheduling.}
-Table~\ref{tab:resources} reveals a sharp structural divergence between
-the bulk of the search space and a small set of leaves on the special
-frame $(0,1,0,1)$. While the zero-deficit monochromatic leaf
-(\texttt{b12}, which imposes the quadratic moment identity) remained
-under $0.75$\,s solve time ($1.14$\,s including checking) through
-$n=64$, two single-leaf families without quadratic moment constraints
-grew roughly fourfold to fivefold per step of $+4$ in $n$:
+The largest proofs in Table~\ref{tab:resources} came from the
+special frame $(0,1,0,1)$. Its zero-deficit monochromatic leaf
+(\texttt{b12}) imposed the quadratic moment identity and took
+less than $0.75$\,s to solve and at most $1.14$\,s including
+checking on the tested boards. The proof sizes in two other
+branches increased with $n$:
 \begin{itemize}[leftmargin=1.8em,itemsep=2pt]
   \item For $n\equiv2\pmod4$, the single-deficit monochromatic leaf
     \texttt{0\_1\_0\_1\_0\_0\_0\_1\_b8} grew from $33.65$\,MB ($n=50$)
@@ -906,9 +916,8 @@ grew roughly fourfold to fivefold per step of $+4$ in $n$:
     $3\,066.20$\,MB ($n=62$). On $Q_{62}$ this single leaf took
     $2\,475.08$\,s to solve and $2\,544.16$\,s to check ($5\,019.24$\,s
     combined), accounting for essentially the entire $5\,020.18$\,s wall
-    time; the remaining $37\,570$ leaves totaled $6\,244.90$\,s solve
-    and $5\,731.02$\,s check across the other nine workers (averaging
-    $1\,330.7$\,s of combined solve-and-check work per worker).
+    time. The remaining $37\,570$ leaves summed to $6\,244.89$\,s
+    of solve time and $5\,731.02$\,s of check time across workers.
   \item For $n\equiv0\pmod4$, the total-deficit-two leaf
     \texttt{0\_1\_0\_1\_0\_0\_1\_1\_b3} (which does not separate
     monochromatic from bichromatic placements on $(0,1,0,1)$) grew from
@@ -925,14 +934,44 @@ $210$\,MB temporary disk. Prioritizing $(0,1,0,1)$ leaves in branches~8,
 3, and~12 at the front of the work queue (a scheduling-only change
 verified to preserve all $74\,155$ archived $Q_{50}$--$Q_{54}$ CNF
 SHA-256 hashes bit-for-bit) allowed \texttt{0\_1\_0\_1\_0\_0\_1\_1\_b3}
-to run concurrently from $t=0$ and finish inside the bulk wall clock on
-both $Q_{60}$ ($2\,418.80$\,s) and $Q_{64}$ ($3\,270.29$\,s). Projecting
-from Table~\ref{tab:resources}, extending the unmodified encoder beyond
-$n=64$ will soon be limited not by leaf count, but by the single-leaf
-\texttt{drat-trim} memory footprint on $Q_{66}$ (\texttt{b8}) and
-$Q_{68}$ (\texttt{b3}) unless stronger quadratic or algebraic
-constraints are proved for $d_T+d_S\in\{1,2\}$ (or monochromatic
-placements are separated in branch~3).
+to start with the other workers and finish before the end of the
+worker phase on both $Q_{60}$ and $Q_{64}$.
+
+\paragraph{Published constraints for larger boards.}
+Weakley's results apply to all monochromatic dominating $k$-sets
+on $Q_{2k}$~\cite[Theorems~17--18 and Section~3]{Weakley2022}.
+For $n\equiv0\pmod4$ the only board sizes admitting such a
+monochromatic set are $4$ and $12$. For $n=2k>2$ with $k$ odd,
+the standard orientation has no excess difference-diagonal indices
+and two excess sum-diagonal indices, counted with multiplicity.
+
+Let $d_{\mathrm W}$ be half the absolute difference of the two
+excess sum indices and $e_{\mathrm W}=|s_0-s_2|/2$, where $s_r$ is the
+least absolute value of a missing sum index in residue class $r$
+modulo four. Weakley's necessary condition is
+\[
+  d_{\mathrm W}^{\,2}+(k-1)e_{\mathrm W}^{\,2}=\frac{k(k^2+2)}{3},
+  \qquad d_{\mathrm W},e_{\mathrm W}\in\{1,3,\dots,k\}.
+\]
+For $2<n<238$, the equation leaves $n=6,10,18,30,38,54,130,142,234$.
+Proposition~19 excludes $38,142$ ($d_{\mathrm W}=e_{\mathrm W}$),
+and the negative $F(k)$ bounds in Section~3 exclude $54,234$.
+Thus for even $50\le n\le128$, future runs could omit the
+monochromatic leaves, including \texttt{b8}, and require both
+colors in mixed branches such as \texttt{b3}.
+
+For bichromatic sets with $k>2$, Weakley~\cite[Proposition~11]{Weakley2022}
+gives the count pair $\{z_0,z_1\}=\{\lfloor k/2\rfloor,\lceil k/2\rceil\}$,
+with the additional pair $\{k/2-1,k/2+1\}$ possible only if $k,w,h$
+are even and $d_R=d_C=0$. This would restrict the largest \texttt{b3}
+leaf on $Q_{64}$ to $z_0\in\{15,16,17\}$. For nonsquare
+even-by-even frames with $w>h$, one can intersect those count bounds
+with $z_{\bar q_*}\le h/2$. The margin sum in Lemma~\ref{lem:ns1}(ii)
+and $w\le2k-2$ already give $h\ge k$.
+
+These refinements would use Weakley's structural results. The
+reported lower bounds use the case coverage of
+Sections~\ref{sec:prelim}--\ref{sec:encoding} and the DRAT checks.
 
 \paragraph{Controlled single-machine benchmarks ($n=26$).}
 For a controlled measurement of certification overhead on one Apple~M4, we used one worker,
@@ -961,11 +1000,8 @@ number of formulas from $7\,668$ to $2\,773$. All proofs passed
 the checker in all six runs.
 
 Davies~\cite[Section~4, Table~2]{Davies2026} reports single-core
-solver and checker seconds on a shared machine running four to
-six processes. His even-board runs used the default CaDiCaL
-3.1.0 configuration without symmetry-breaking clauses or
-cubing. Those measurements and the elapsed times above have
-different timing definitions and execution environments.
+times on a shared machine. The even-board runs used default
+CaDiCaL~3.1.0 without symmetry breaking or cubing.
 
 \section{Explicit upper-bound witnesses}\label{sec:witnesses}
 
@@ -973,11 +1009,17 @@ Coordinates are $(x,y)=(\text{column},\text{row})$ and are indexed
 from zero. The witness search (\texttt{src/witness\_sa.cpp}) used
 permutations on odd-odd squares plus one additional queen. The verifier
 confirms the size of each listed set and checks every square for
-coverage. For $Q_{60}$ (Corollary~\ref{cor:indep60}) and the five sets
+coverage. For the $Q_{60}$ placement and the five sets
 in Theorem~\ref{thm:indep}, it also verifies that all four line families
 have distinct indices across the queens.
 
-\paragraph{Dominating sets for Theorem~\ref{thm:main} and Corollary~\ref{cor:indep60}.}
+For Corollary~\ref{cor:indep}, we checked the eight independent
+placements of \"Osterg\aa rd and Weakley~\cite[Section~5, p.~11]{OW2001}
+in their original coordinates. For $Q_{58}$, their construction
+adjoins row and column $-29$ to $Q_{57}$ and adds the queen at
+$(17,-29)$, giving the board $[-29,28]^2$.
+
+\paragraph{Dominating sets for Theorem~\ref{thm:main}.}
 \begin{itemize}[leftmargin=1.6em,itemsep=4pt]
   \item \textbf{$Q_{50}$ ($26$ queens):}
   $(0,0)$, $(1,3)$, $(3,35)$, $(5,25)$, $(7,15)$, $(9,9)$, $(11,39)$, $(13,49)$, $(15,19)$, $(17,27)$, $(19,11)$, $(21,45)$, $(23,29)$, $(25,1)$, $(27,21)$, $(29,41)$, $(31,47)$, $(33,23)$, $(35,7)$, $(37,17)$, $(39,37)$, $(41,5)$, $(43,31)$, $(45,13)$, $(47,43)$, $(49,33)$.
@@ -1066,12 +1108,6 @@ human mathematical verification of the written proofs or encoder.
 \raggedright
 \setlength{\itemsep}{4pt plus 1pt}
 
-\bibitem{Hint2026}
-Anonymous,
-\emph{Hint and Conquer: New Queen Domination Numbers by SAT Solving},
-preprint, 2026.
-\href{https://github.com/TahaRostami/Gamma/blob/hint-and-conquer/doc.pdf}{Manuscript on the \texttt{hint-and-conquer} branch}.
-
 \bibitem{BB2003}
 O.~Bailleux and Y.~Boufkhad,
 \emph{Efficient CNF encoding of Boolean cardinality constraints},
@@ -1101,11 +1137,23 @@ Hexagon Math, 2026.
 \href{https://hexagonmath.org/2611.00830v1}{2611.00830v1}.
 
 \bibitem{Djukic2026}
-A.~\DJ uki\'c,
+Aleksej \DJ uki\'c,
 comment on $\gamma(Q_{48})$ in OEIS sequence A075458,
 November 22, 2026.
 \href{https://oeis.org/A075458}{Sequence}
 and \href{https://oeis.org/A075458/a075458_1.txt}{computation summary and witness}.
+
+\bibitem{Guy1994}
+R.~K.~Guy,
+\emph{Unsolved Problems in Number Theory},
+2nd ed., Springer, New York, 1994, Problem~C18.
+\href{https://doi.org/10.1007/978-1-4899-3585-4}{DOI}.
+
+\bibitem{BSC2026}
+jkolantree,
+\emph{$Q_{26}$ grid-annihilator formalization},
+Lean development in the \texttt{BSC} repository, 2026.
+\href{https://github.com/jkolantree/BSC/tree/main/formal/q26_grid_annihilator}{Project and theorem statement}.
 
 \bibitem{Neuhaus2009}
 S.~Neuhaus,
@@ -1124,6 +1172,13 @@ V.~Raghavan and S.~M.~Venkatesan,
 \emph{On bounds for a board covering problem},
 Inform.\ Process.\ Lett.\ \textbf{25}(5) (1987), 281--284.
 \href{https://doi.org/10.1016/0020-0190(87)90201-8}{DOI}.
+
+\bibitem{Hint2026}
+T.~Rostami,
+\emph{Hint and Conquer: New Queen Domination Numbers by SAT Solving},
+preprint, 2026.
+\href{https://github.com/TahaRostami/Gamma/blob/hint-and-conquer/doc.pdf}{Manuscript}.
+Author attribution follows \href{https://oeis.org/A075458}{OEIS~A075458}.
 
 \bibitem{Sinz2005}
 C.~Sinz,

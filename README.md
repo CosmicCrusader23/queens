@@ -1,6 +1,8 @@
 # Queen domination on even boards
 
-The manuscript determines the ordinary domination numbers of the queen’s graph for all eight even boards $n=50,52,54,56,58,60,62,64$ as $\gamma(Q_n) = n/2 + 1$, namely $26,27,28,29,30,31,32,33$. Each lower bound uses a color-split frame reduction and binary DRAT proofs checked by unmodified `drat-trim`. Explicit coordinate witnesses attain every upper bound; the $Q_{60}$ witness is pairwise non-attacking, additionally certifying $i(Q_{60}) = 31$. The repository also supplies directly checkable independent dominating sets for five earlier values reported by [Neuhaus, §2.4](https://kups.ub.uni-koeln.de/2916/) ($n=32,34,38,40,44$).
+For all eight even boards from $n=50$ through $n=64$, the manuscript proves $\gamma(Q_n)=i(Q_n)=n/2+1$, giving the values $26,27,28,29,30,31,32,33$. The eight lower bounds use a color-split frame reduction and binary DRAT proofs checked by `drat-trim`. Published independent placements yield the matching upper bounds for $i(Q_n)$. The repository gives its own upper-bound witnesses for all eight boards, including an independent placement on $Q_{60}$. [Östergård and Weakley, §5](https://doi.org/10.37236/1573).
+
+The repository also supplies directly checkable independent dominating sets for five earlier values at $n=32,34,38,40,44$. [Neuhaus, §2.4](https://kups.ub.uni-koeln.de/2916/).
 
 - Manuscript [PDF](https://github.com/CosmicCrusader23/queens/blob/main/paper/paper.pdf) and [LaTeX source](https://github.com/CosmicCrusader23/queens/blob/main/paper/paper.tex). The paper cites the immutable computational snapshot commit.
 - [Mathematical reductions and branch tags](PROOFS.md).
