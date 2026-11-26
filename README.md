@@ -14,9 +14,9 @@ The manuscript determines the ordinary domination numbers of the queen’s graph
 | 52 | 26 | 63,119 | 43,354 | 30,814 |
 | 54 | 27 | 72,268 | 59,164 | 24,251 |
 
-The `cert_n*_k*.jsonl` files in [results](results/) are archival audit logs. Each leaf records its tag, DIMACS hash, solver verdict, and checker status. Original temporary CNF and DRAT files were deleted after the checks. Two archived $n=50$ hashes predate an extra encoding constraint. Both current formulas were refuted and rechecked during revision. Their exact CNFs, compressed binary DRAT proofs, and replay log are in [replay_n50](results/replay_n50/).
+The `cert_n*_k*.jsonl` files in [results](results/) contain one complete audit log per board. Each leaf records its tag, DIMACS hash, solver verdict, and checker status. All 74,155 hashes match the pinned encoder. The $n=50$ log comes from a complete new run against that encoder. The $n=52,54$ logs are from the original runs.
 
-The remaining 74,153 archived hashes match regenerated CNFs. A separate Python auditor re-enumerates every tag and checks the archived summaries. It invokes DRAT-trim for the two retained proofs when requested. A full replay regenerates and checks all proofs, including the ones represented only by audit records.
+The Python auditor independently re-enumerates the branch tags and matches them to the records. The raw CNFs and DRAT proofs were temporary. The regeneration command below produces and checks them again.
 
 ## Build
 
@@ -36,24 +36,20 @@ make -j4
 
 The dependency pins are [CaDiCaL 3.1.0](https://github.com/arminbiere/cadical/commit/e4d9bd93af444c6575a908a24da2c4130cb2a1c7) and [DRAT-trim](https://github.com/marijnheule/drat-trim/commit/2e3b2dc0ecf938addbd779d42877b6ed69d9a985). The default checker path is `build/drat-trim`. The driver uses binary DRAT, backward checking, `-w` to suppress warnings, and a `-t 1000000` checker timeout.
 
-## Check the archive and explicit witnesses
+## Check the records and explicit witnesses
 
 ```sh
 mkdir -p replay
 python3 scripts/verify_certificate.py --witness-json results/even_upper_witnesses.json
 for n in 50 52 54; do
   ./build/queen_prover --n "$n" --fingerprints > "replay/n$n.tsv" || exit 1
+  python3 scripts/verify_certificate.py --n "$n" \
+    --cert "results/cert_n${n}_k$((n / 2)).jsonl" \
+    --fingerprints "replay/n$n.tsv" || exit 1
 done
-python3 scripts/verify_certificate.py --n 50 --cert results/cert_n50_k25.jsonl \
-  --fingerprints replay/n50.tsv --replay results/replay_n50/record.jsonl \
-  --retained results/replay_n50
-python3 scripts/verify_certificate.py --n 52 --cert results/cert_n52_k26.jsonl \
-  --fingerprints replay/n52.tsv
-python3 scripts/verify_certificate.py --n 54 --cert results/cert_n54_k27.jsonl \
-  --fingerprints replay/n54.tsv
 ```
 
-The auditor should print checked witnesses for 12 boards and confirm 19,088, 30,814, and 24,251 matching archival hashes. It checks the two remaining $n=50$ digests against the replay records and passes the actual retained pairs to DRAT-trim. Run the Python programs with assertions enabled.
+The auditor should print checked witnesses for 12 boards and confirm 19,090, 30,814, and 24,251 matching hashes. Run the Python programs with assertions enabled.
 
 To search for another witness, run `./build/witness_sa --n 50 --mode even_plus1 --jobs 4 --timeout 30`. Add `--indep` to require a pairwise non-attacking set. The search is heuristic and can return a different placement or reach the time limit. The archived coordinates give the reproducible upper-bound check.
 
@@ -68,9 +64,9 @@ for n in 50 52 54; do
 done
 ```
 
-An all-UNSAT run exits with code 20 and prints `UNSAT_CERTIFIED`. The expected verification counts are 19,090, 30,814, and 24,251. The default run deletes each temporary pair after checking. Add `--proof-dir replay/proofs-n50` (or a separate new directory for each board) to retain every pair. Use `--tags results/replay_n50/tags.txt` with `--n 50` to regenerate just the two changed leaves. The `auto` solver configuration selects `unsat` for branch kinds 1, 2, 5, 7, 8, 11, and 12. It uses the default configuration for the other branches.
+An all-UNSAT run exits with code 20 and prints `UNSAT_CERTIFIED`. The expected verification counts are 19,090, 30,814, and 24,251. The default run deletes each temporary pair after checking. Add `--proof-dir replay/proofs-n50` (or a separate new directory for each board) to retain every pair. The `auto` solver configuration selects `unsat` for branch kinds 1, 2, 5, 7, 8, 11, and 12. It uses the default configuration for the other branches.
 
-The number of candidate margin tuples grows as $O(n^4)$. The margin and Hall-capacity tests take up to $O(n)$ per case. Each formula starts from at most $n^2$ queen variables and adds occupancy and counter variables. SAT solve and check times depend on the formula and machine. The archival worker-phase times were 532.63, 1,286.19, and 807.08 seconds. Archival proofs totalled about 13.25 GB before deletion. Allow additional disk space for DIMACS files if retaining a full run.
+The number of candidate margin tuples grows as $O(n^4)$. The margin and Hall-capacity tests take up to $O(n)$ per case. Each formula starts from at most $n^2$ queen variables and adds occupancy and counter variables. SAT solve and check times depend on the formula and machine. Table 1 in the manuscript reports the recorded runtimes and proof sizes. Allow additional disk space for DIMACS files if retaining a full run.
 
 ## Validation and timing
 
@@ -78,9 +74,10 @@ The number of candidate margin tuples grows as $O(n^4)$. The margin and Hall-cap
 mkdir -p replay
 python3 scripts/check_small_boards.py
 python3 bench/verification_overhead.py > replay/benchmark-overhead-n26.json
+python3 bench/algebraic_pruning.py --jobs 10 --repetitions 3 > replay/benchmark-pruning-n26.json
 ```
 
-The small-board check compares direct enumeration at $n=4,6,8$ with the SAT pipeline with and without within-case lex constraints. The benchmark uses the same 99 leaves of $n=26$, the same solver settings, and one worker on the same machine. It measures with and without proof generation and checking, alternating run order across three repeats. [Recorded benchmark](results/benchmark-overhead-n26.json).
+The small-board check compares direct enumeration at $n=4,6,8$ with the SAT pipeline with and without within-case lex constraints. The overhead benchmark uses the same 99 leaves of $n=26$, the same solver settings, and one worker on the same machine. It measures with and without proof generation and checking. The pruning benchmark runs the complete certified $n=26$ computation, toggling only the algebraic case-pruning pass. It holds the solver, checker, machine, and worker count fixed. Both experiments alternate which mode goes first across three repeats. [Proof overhead](results/benchmark-overhead-n26.json) · [Algebraic pruning](results/benchmark-pruning-n26.json).
 
 The old `*_cpu_s` fields are sums of worker elapsed times. The revised names end in `_elapsed_sum_s`. The solver timer covers `solve()` and proof writes during that call. The checker timer includes starting and waiting for the checker. Worker wall time begins after case generation and ordering. Published Davies timings have different definitions and execution environments. [Davies, Table 2](https://hexagonmath.org/2611.00830v1).
 

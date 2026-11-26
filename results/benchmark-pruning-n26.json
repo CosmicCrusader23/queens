@@ -1,0 +1,87 @@
+{
+  "n": 26,
+  "platform": {
+    "system": "Darwin",
+    "release": "25.5.0",
+    "arch": "arm64"
+  },
+  "workers": 10,
+  "solver_configuration": "auto",
+  "checker_options": [
+    "-w",
+    "-t",
+    "1000000"
+  ],
+  "wall_clock": "Python perf_counter around the complete prover command",
+  "measurements": {
+    "pruning_on": [
+      {
+        "elapsed_s": 18.5323,
+        "canonical_cases": 5558,
+        "subproblems": 2773,
+        "verified": 2773,
+        "wall_s": 18.52,
+        "solve_elapsed_sum_s": 12.96,
+        "check_elapsed_sum_s": 158.04,
+        "proof_mb": 68.83
+      },
+      {
+        "elapsed_s": 25.1303,
+        "canonical_cases": 5558,
+        "subproblems": 2773,
+        "verified": 2773,
+        "wall_s": 25.12,
+        "solve_elapsed_sum_s": 18.94,
+        "check_elapsed_sum_s": 212.86,
+        "proof_mb": 68.83
+      },
+      {
+        "elapsed_s": 24.3938,
+        "canonical_cases": 5558,
+        "subproblems": 2773,
+        "verified": 2773,
+        "wall_s": 24.38,
+        "solve_elapsed_sum_s": 18.71,
+        "check_elapsed_sum_s": 206.64,
+        "proof_mb": 68.83
+      }
+    ],
+    "pruning_off": [
+      {
+        "elapsed_s": 46.2851,
+        "canonical_cases": 5558,
+        "subproblems": 7668,
+        "verified": 7668,
+        "wall_s": 46.28,
+        "solve_elapsed_sum_s": 15.04,
+        "check_elapsed_sum_s": 421.76,
+        "proof_mb": 134.65
+      },
+      {
+        "elapsed_s": 58.4855,
+        "canonical_cases": 5558,
+        "subproblems": 7668,
+        "verified": 7668,
+        "wall_s": 58.48,
+        "solve_elapsed_sum_s": 19.57,
+        "check_elapsed_sum_s": 530.58,
+        "proof_mb": 134.65
+      },
+      {
+        "elapsed_s": 62.6238,
+        "canonical_cases": 5558,
+        "subproblems": 7668,
+        "verified": 7668,
+        "wall_s": 62.61,
+        "solve_elapsed_sum_s": 19.99,
+        "check_elapsed_sum_s": 570.73,
+        "proof_mb": 134.65
+      }
+    ]
+  },
+  "median_elapsed_s": {
+    "pruning_on": 24.3938,
+    "pruning_off": 58.4855
+  },
+  "off_to_on_median_ratio": 2.397555936344481
+}

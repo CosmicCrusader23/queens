@@ -2,14 +2,9 @@
 """Audit the case list, recorded DRAT checks, and explicit witnesses."""
 import argparse
 from decimal import Decimal
-import gzip
-import hashlib
 import json
 from pathlib import Path
 import re
-import shutil
-import subprocess
-import tempfile
 
 
 def case_images(c):
@@ -234,30 +229,7 @@ def read_log(path, n):
     return records, summary
 
 
-def check_retained_proofs(directory, checker, records):
-    with tempfile.TemporaryDirectory() as temp:
-        for tag, record in sorted(records.items()):
-            cnf = directory / f"{tag}.cnf"
-            with cnf.open("rb") as f:
-                assert hashlib.file_digest(f, "sha256").hexdigest() == record["cnf_sha256"], cnf
-            proof = Path(temp) / f"{tag}.drat"
-            with gzip.open(directory / f"{tag}.drat.gz", "rb") as source, proof.open("wb") as target:
-                shutil.copyfileobj(source, target)
-            assert proof.stat().st_size == record["proof_bytes"], proof
-            result = subprocess.run(
-                [str(checker.resolve()), str(cnf), str(proof), "-w", "-t", "1000000"],
-                stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, check=False,
-            )
-            lines = result.stdout.splitlines()
-            trivial = any(line.startswith("c trivial UNSAT") for line in lines)
-            assert "s VERIFIED" in lines and (
-                result.returncode == 0 or (result.returncode == 1 and trivial)
-            ), (tag, result.returncode, result.stdout)
-            proof.unlink()
-            print(f"  {tag}: retained CNF digest and DRAT proof verified.")
-
-
-def audit_log(n, certificate, fingerprints=None, replay=None, retained=None, checker=None):
+def audit_log(n, certificate, fingerprints=None):
     exp_canon, exp_pruned, exp_tags = expected_tags(n)
     records, summary = read_log(certificate, n)
     missing = exp_tags - records.keys()
@@ -276,17 +248,8 @@ def audit_log(n, certificate, fingerprints=None, replay=None, retained=None, che
             current[tag] = digest
         assert current.keys() == records.keys(), "Generated and recorded tag sets differ"
         changed = {tag for tag, digest in current.items() if records[tag]["cnf_sha256"] != digest}
-        if replay:
-            rechecked, replay_summary = read_log(replay, n)
-            assert replay_summary["canonical_cases"] == exp_canon
-            assert rechecked.keys() == changed, ("Unexpected replay set", sorted(changed ^ rechecked.keys()))
-            assert all(row["cnf_sha256"] == current[tag] for tag, row in rechecked.items())
-            if retained is not None:
-                check_retained_proofs(retained, checker, rechecked)
-        else:
-            assert not changed, ("CNF fingerprint mismatches", sorted(changed))
-        print(f"  {len(current) - len(changed)} archival CNF hashes match, "
-              f"{len(changed)} matched to separate replay logs.")
+        assert not changed, (f"{len(changed)} CNF fingerprint mismatches", sorted(changed)[:5])
+        print(f"  All {len(current)} regenerated CNF hashes match the log.")
 
 
 def main():
@@ -294,24 +257,19 @@ def main():
     ap.add_argument("--n", type=int)
     ap.add_argument("--cert", type=Path)
     ap.add_argument("--fingerprints", type=Path)
-    ap.add_argument("--replay", type=Path)
-    ap.add_argument("--retained", type=Path, help="also check the retained CNF and compressed DRAT pairs")
-    ap.add_argument("--checker", type=Path, default=Path("build/drat-trim"))
     ap.add_argument("--witness-json", type=Path)
     args = ap.parse_args()
     if not __debug__:
         ap.error("run with Python assertions enabled")
     if args.cert and (args.n is None or args.n < 4 or args.n % 2):
         ap.error("--cert requires --n to be an even integer at least 4")
-    if (args.fingerprints and not args.cert) or (args.replay and not args.fingerprints):
-        ap.error("--replay requires --fingerprints, which requires --cert")
-    if args.retained and not args.replay:
-        ap.error("--retained requires --replay")
+    if args.fingerprints and not args.cert:
+        ap.error("--fingerprints requires --cert")
     if not args.cert and not args.witness_json:
         ap.error("provide a certificate log or a witness file")
 
     if args.cert:
-        audit_log(args.n, args.cert, args.fingerprints, args.replay, args.retained, args.checker)
+        audit_log(args.n, args.cert, args.fingerprints)
     if args.witness_json:
         data = json.loads(args.witness_json.read_text())
         boards = sorted(map(int, data)) if args.n is None else [args.n]
