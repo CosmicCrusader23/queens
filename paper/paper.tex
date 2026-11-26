@@ -7,10 +7,11 @@
 \usepackage{enumitem}
 \usepackage{xcolor}
 \usepackage{pict2e}
+\usepackage{xurl}
 \usepackage[hidelinks]{hyperref}
 
 \hypersetup{
-  pdftitle={Color-split frame reductions for queen domination on boards of sizes 50, 52 and 54},
+  pdftitle={Color-split frame reductions for queen domination on even boards of sizes 50 through 64},
   pdfauthor={Edwin Chan}
 }
 
@@ -99,11 +100,11 @@
 \newcommand{\waste}{\mathrm{waste}}
 \newcommand{\Bd}{\mathrm{Bd}}
 \newcommand{\Stab}{\mathrm{Stab}}
-\newcommand{\ReproCommit}{7872bd98a9d1d72d463c6b967717bd7ab093b7d8}
+\newcommand{\ReproCommit}{61e8df4438cad8837f4498ad4160394028ca7232}
 
 \title{Color-split frame reductions for queen domination\\
-  on boards of sizes 50, 52 and 54}
-\author{Edwin Chan\thanks{Research, coding, computations, and drafting were carried out with AI assistance; no independent human mathematical verification of the proofs or encoder has been performed. See Section~\ref{sec:provenance} for full provenance.}}
+  on even boards of sizes 50 through 64}
+\author{Edwin Chan\thanks{Research, coding, computations, and drafting were carried out with AI assistance; automated verification and AI adversarial review do not constitute independent human mathematical verification. See Section~\ref{sec:provenance} for full provenance.}}
 \date{November 27, 2026}
 
 \begin{document}
@@ -111,14 +112,20 @@
 
 \begin{abstract}
 We determine the domination number $\gamma(Q_n)$ of the queen's graph for
-$n=50,52,54$, obtaining $\gamma(Q_{50})=26$, $\gamma(Q_{52})=27$, and
-$\gamma(Q_{54})=28$. For each lower bound we group candidate placements
-by the frame of their outermost empty lines and refine the frame
-constraints by chessboard parity. Algebraic tests discard some cases,
-and the remaining Boolean formulas are refuted with DRAT proofs
-checked by \texttt{drat-trim}. Explicit placements attain the three
-bounds. We also give explicit witnesses for five previously reported
-independent domination numbers.
+every even board size $50\le n\le64$, obtaining $\gamma(Q_n)=n/2+1$ for
+$n=50,52,54,56,58,60,62,64$ (values $26,27,28,29,30,31,32,33$). For each
+lower bound we group candidate placements by the frame of their outermost
+empty lines and refine the frame and side counting identities by
+chessboard parity. Algebraic tests discard $68.7\%$--$83.2\%$ of
+canonical cases, and all $290\,542$ remaining Boolean formulas across
+the eight boards are refuted with binary DRAT proofs ($80.34$\,GB
+cumulative) checked by unmodified \texttt{drat-trim}. Explicit placements
+attain all eight upper bounds; the placement for $Q_{60}$ is pairwise
+non-attacking, additionally certifying the independent domination number
+$i(Q_{60})=31$. We also supply explicit checked witnesses for five
+previously reported independent domination numbers ($n=32,34,38,40,44$)
+and document the observed memory, temporary storage, and single-leaf
+bottlenecks governing scalability beyond $n=64$.
 \end{abstract}
 
 \section{Introduction}\label{sec:intro}
@@ -136,25 +143,37 @@ For even $n$, Spencer's bound as reported by Cockayne~\cite{Cockayne1990}
 and the bound of Raghavan and Venkatesan~\cite{RV1987} give
 $\gamma(Q_n)\ge n/2$. For even $26\le n\le120$, the upper bounds of
 \"Osterg\aa rd and Weakley~\cite{OW2001} leave the two possibilities
-$n/2$ and $n/2+1$. For the role of monochromatic placements on even
-boards, see Weakley~\cite{Weakley2022}.
+$n/2$ and $n/2+1$. Weakley~\cite{Weakley2022} analyzed the chessboard
+parity split of $n/2$-queen dominating sets on even boards, bounding the
+color imbalance of bichromatic placements and studying monochromatic
+placements.
 
 Neuhaus~\cite[Section~2.4]{Neuhaus2009} reported integer-programming
-results for ordinary and independent domination on even boards.
+results for ordinary and independent domination on even boards through
+$n=46$ (as well as selected larger boards, without independently
+checkable proof certificates).
 \emph{Hint and Conquer}~\cite{Hint2026} splits the search by the
 outermost empty rows and columns, using diagonal-coverage constraints
-on the resulting frame. Davies~\cite[Sections 2 and 4]{Davies2026}
-refined the split by the four deficits in occupied line counts and
-obtained certified ordinary domination numbers through $n=46$.
-\DJ uki\'c~\cite{Djukic2026} reported a DRAT computation using Davies's
-frame method for $n=48$. Here we refine the frame and side identities by
-chessboard parity, account for case and branch symmetries separately,
-and apply the resulting reduction to $n=50,52,54$.
+on the resulting frame to certify even boards through $n=38$.
+Davies~\cite[Sections 2 and 4]{Davies2026} refined the split by the four
+deficits in occupied line counts and obtained DRAT-certified ordinary
+domination numbers through $n=46$. \DJ uki\'c~\cite{Djukic2026} reported
+a DRAT-certified frame computation for $n=48$. All even boards
+$50\le n\le64$ remained open in OEIS~\href{https://oeis.org/A075458}{A075458}.
+Here we refine the frame and side identities by chessboard parity,
+account for case and branch symmetries separately, and certify all eight
+even boards $n=50,52,54,56,58,60,62,64$, completing certified values of
+$\gamma(Q_n)$ for every even $n\le64$.
 
 \begin{theorem}\label{thm:main}
-The queen domination numbers on the three boards are
+For every even $n\in\{50,52,54,56,58,60,62,64\}$, no $n/2$ queens
+dominate $Q_n$, while explicit dominating sets of size $n/2+1$ exist.
+Consequently,
 \[
-  \gamma(Q_{50})=26,\qquad \gamma(Q_{52})=27,\qquad \gamma(Q_{54})=28.
+  \begin{aligned}
+    \gamma(Q_{50})&=26, & \gamma(Q_{52})&=27, & \gamma(Q_{54})&=28, & \gamma(Q_{56})&=29,\\
+    \gamma(Q_{58})&=30, & \gamma(Q_{60})&=31, & \gamma(Q_{62})&=32, & \gamma(Q_{64})&=33.
+  \end{aligned}
 \]
 \end{theorem}
 
@@ -163,8 +182,20 @@ If a set of size at most $k=n/2$ dominates, it can be extended to a
 dominating set of size $k$ by adding arbitrary distinct squares.
 Theorem~\ref{thm:coverage} places a dihedral image of such a set in a
 satisfiable generated instance. Section~\ref{sec:results} accounts for
-the refutation of every generated instance on these three boards.
-The placements in Section~\ref{sec:witnesses} give the matching upper bounds.
+the DRAT-checked refutation of every generated instance on all eight
+boards. The explicit placements in Section~\ref{sec:witnesses} give the
+matching upper bounds.
+\end{proof}
+
+\begin{corollary}\label{cor:indep60}
+The independent domination number of $Q_{60}$ is $i(Q_{60})=31$.
+\end{corollary}
+
+\begin{proof}
+By Theorem~\ref{thm:main}, $i(Q_{60})\ge\gamma(Q_{60})=31$. The explicit
+$31$-queen dominating placement for $Q_{60}$ in Section~\ref{sec:witnesses}
+has pairwise distinct rows, columns, difference diagonals, and sum
+diagonals, giving $i(Q_{60})\le31$.
 \end{proof}
 
 \begin{theorem}[Neuhaus~\cite{Neuhaus2009}]\label{thm:indep}
@@ -741,60 +772,76 @@ the zero-deficit family or the reduced permutation constraints.
 
 \subsection{Certified runs and record audit}
 
-Table~\ref{tab:certified} reports the three certification runs.
-Each worker writes the DIMACS formula, hashes it with SHA-256,
-and asks CaDiCaL to write a binary DRAT proof. The unmodified
-\texttt{drat-trim} checker~\cite{DRATtrim} checks the formula and
-proof. The driver records the solver verdict and checker status
-and deletes the temporary files. Every leaf was refuted and its
-DRAT proof passed the checker.
+Table~\ref{tab:certified} reports all eight certification runs
+($50\le n\le64$). Each worker writes the DIMACS formula, hashes it with
+SHA-256, and asks CaDiCaL to write a binary DRAT proof. The unmodified
+\texttt{drat-trim} checker~\cite{DRATtrim} verifies the formula and
+proof in backward mode. Upon successful verification the driver records
+the solver verdict, proof byte count, and checker status, and deletes
+the temporary CNF and DRAT files; any verification failure or unexpected
+satisfiable assignment preserves its temporary files for investigation.
+Every one of the $290\,542$ generated leaves across the eight boards
+was refuted and its DRAT proof passed \texttt{drat-trim} with zero
+errors and zero satisfiable instances.
 
 \begin{table}[!htbp]
 \centering\small
-\caption{Certified even-board runs. Solve and check columns sum
-  elapsed seconds across leaves. Wall time measures the worker
-  phase. Proof sizes are decimal gigabytes generated during a run.}
+\caption{Certified even-board runs for $n=50,\dots,64$ on one ten-core
+  Apple~M4 (ten workers, \texttt{-{}-config auto}). Solve and check columns
+  sum elapsed seconds across workers. Wall time measures the worker
+  phase. Proof sizes are decimal gigabytes generated and checked during
+  each run; totals sum exact unrounded values.}
 \label{tab:certified}
-\setlength{\tabcolsep}{5pt}
-\renewcommand{\arraystretch}{1.2}
+\setlength{\tabcolsep}{4.2pt}
+\renewcommand{\arraystretch}{1.18}
 \begin{tabular}{@{}rrrrrrrrr@{}}
 \toprule
-$n$ & $k$ & Canonical & Pruned & Leaves & Solve (s) & Check (s) & Wall (s) & DRAT (GB) \\
+$n$ & $k$ & Canonical & Pruned (\%) & Leaves & Solve (s) & Check (s) & Wall (s) & DRAT (GB) \\
 \midrule
-50 & 25 & 54\,626 & 44\,288 & 19\,090 & 1\,799.29 & 2\,703.82 & 492.68 & 2.69 \\
-52 & 26 & 63\,119 & 43\,354 & 30\,814 & 5\,539.94 & 5\,434.66 & 1\,170.76 & 6.21 \\
-54 & 27 & 72\,268 & 59\,164 & 24\,251 & 3\,512.24 & 4\,388.23 & 856.67 & 4.35 \\
+50 & 25 & 54\,626 & 44\,288 (81.1) & 19\,090 & 1\,799.29 & 2\,703.82 & 492.68 & 2.69 \\
+52 & 26 & 63\,119 & 43\,354 (68.7) & 30\,814 & 5\,539.94 & 5\,434.66 & 1\,170.76 & 6.21 \\
+54 & 27 & 72\,268 & 59\,164 (81.9) & 24\,251 & 3\,512.24 & 4\,388.23 & 856.67 & 4.35 \\
+56 & 28 & 82\,695 & 57\,564 (69.6) & 39\,144 & 7\,947.76 & 6\,673.64 & 1\,551.10 & 9.53 \\
+58 & 29 & 93\,870 & 77\,479 (82.5) & 30\,409 & 5\,272.34 & 5\,162.29 & 1\,434.49 & 7.23 \\
+60 & 30 & 106\,504 & 74\,991 (70.4) & 48\,856 & 13\,191.39 & 9\,754.24 & 2\,418.80 & 14.67 \\
+62 & 31 & 119\,984 & 99\,772 (83.2) & 37\,571 & 8\,719.97 & 8\,275.18 & 5\,020.18 & 13.09 \\
+64 & 32 & 135\,116 & 96\,115 (71.1) & 60\,407 & 17\,674.78 & 13\,420.81 & 3\,270.29 & 22.58 \\
+\midrule
+Total & & 728\,182 & 552\,727 (75.9) & 290\,542 & 63\,657.71 & 55\,812.87 & 16\,214.97 & 80.34 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-A separate Python program re-enumerates the canonical cases, pruning
-counts, and expected branch tags and matches them to the records.
-It also checks the upper-bound witnesses directly. Every one of the
-$74\,155$ recorded DIMACS hashes matches regeneration with the
-pinned encoder. All three logs ($n=50,52,54$) come from complete
-end-to-end DRAT-certified runs using the pinned encoder, solver,
-and checker.
+Across the five newly certified boards ($n=56,58,60,62,64$), algebraic
+exclusions eliminate $57\,564$ (\texttt{NS-1}) cases at $n=56$;
+$26\,684$ (\texttt{NS-1}), $42\,975$ (\texttt{NS-2}), $6\,580$
+(\texttt{NS-3}), and $1\,240$ (\texttt{SQ-RC-Odd}) cases at $n=58$;
+$74\,991$ (\texttt{NS-1}) cases at $n=60$;
+$34\,544$ (\texttt{NS-1}), $55\,232$ (\texttt{NS-2}), $8\,500$
+(\texttt{NS-3}), and $1\,496$ (\texttt{SQ-RC-Odd}) cases at $n=62$;
+and $96\,115$ (\texttt{NS-1}) cases at $n=64$.
 
-The JSONL files record the checker outcomes and the hashes of the
-formulas they cover. The raw DRAT proofs were deleted after
-checking. They can be regenerated and checked using the public code
-in Section~\ref{sec:data}. The lower-bound argument combines the
-coverage and correctness of the encoding with refutations of the
-generated formulas.
+A separately written Python auditor (\texttt{scripts/verify\_certificate.py})
+re-enumerates the canonical cases, algebraic pruning counts, and expected
+branch tags from first principles and checks a one-to-one set match
+against each JSONL log, verifying all summary arithmetic, checker
+verdicts, and upper-bound witnesses. Every one of the $290\,542$
+recorded DIMACS SHA-256 digests matches fresh regeneration with the
+pinned encoder (including all $74\,155$ preserved digests from the
+earlier $n=50,52,54$ runs). The raw DRAT proofs ($80.34$\,GB cumulative)
+were deleted after checking and can be regenerated and verified from the
+public repository in Section~\ref{sec:data}.
 
-\subsection{Timing and controlled benchmarks}
+\subsection{Timing, resource usage, and scalability bottlenecks}
 
 The summary fields \texttt{solve\_elapsed\_sum\_s} and
 \texttt{check\_elapsed\_sum\_s} sum elapsed times across workers,
-measured by \texttt{std::chrono::steady\_clock} (replacing the
-earlier \texttt{solve\_cpu\_s} and \texttt{check\_cpu\_s} names).
-Solve time measures the \texttt{solve()} call, including DRAT trace
-output during the call. Checker time includes process startup, proof
-checking, and the wait for the checker to exit. Worker wall time
-includes encoding, file operations, solving, and checking, and
-excludes case enumeration and ordering. A sum over workers may
-exceed wall time.
+measured by \texttt{std::chrono::steady\_clock}. Solve time measures
+the \texttt{solve()} call, including DRAT trace output during the call.
+Checker time includes process startup, proof checking, and the wait for
+the checker to exit. Worker wall time includes encoding, file
+operations, solving, and checking, and excludes case enumeration and
+ordering. A sum over workers may exceed wall time.
 
 The pinned code uses CaDiCaL 3.1.0~\cite{CaDiCaL} (commit
 \texttt{e4d9bd93}) and the \texttt{drat-trim} revision
@@ -802,16 +849,93 @@ The pinned code uses CaDiCaL 3.1.0~\cite{CaDiCaL} (commit
 backward mode with binary proof input and the options
 \texttt{-w -t 1000000}. The solver's \texttt{auto} mode uses
 CaDiCaL's \texttt{unsat} configuration for the branches marked in
-the source and the default configuration otherwise. We ran all three
-certifications ($n=50,52,54$) on a ten-core Apple~M4
-(macOS~26.5.2, Apple Clang~17.0.0) with ten workers,
-\texttt{--config auto}, and the pinned tools. Each log schema
-records certification, algebraic pruning, symmetry breaking, and
-elapsed sums; tool commits, solver configuration, and worker count
-are fixed by the pinned build and invocation rather than stored
-in the summary record.
+the source (branch kinds 1, 2, 5, 7, 8, 11, and 12) and the default
+configuration otherwise. All eight certifications ($n=50,\dots,64$) ran
+on a ten-core Apple~M4 with 16\,GB RAM (macOS~26.5.2, Apple Clang~17.0.0)
+using ten workers and \texttt{-{}-config auto}. For $n=56,\dots,64$,
+\nolinkurl{scripts/run_certified_board.py} executed each board sequentially
+while polling free storage, parent and child resident set size (RSS),
+swap usage, macOS VM pressure, and temporary disk usage every $0.5$\,s,
+with automatic graceful suspension configured below $8$\,GiB free storage
+or at critical VM pressure; no board triggered suspension (minimum
+observed free storage remained above $21.0$\,GiB throughout).
 
-For a controlled measurement on one Apple M4, we used one worker,
+\begin{table}[!htbp]
+\centering\small
+\caption{Measured resource peaks and single largest proof leaf during
+  the five $n=56,\dots,64$ runs (with $n=50,52,54$ largest-leaf records
+  for comparison). Peak RSS sums \texttt{queen\_prover} and all active
+  \texttt{drat-trim} children in binary MiB; minimum free disk is in
+  binary GiB; peak temporary disk (active CNF and DRAT files) and leaf
+  DRAT proof sizes are in decimal MB. Leaf tags omit the common
+  $(0,1,0,1)$ frame prefix and trailing zero parameters
+  (\texttt{\_0\_0\_0\_0\_0}).}
+\label{tab:resources}
+\setlength{\tabcolsep}{4.0pt}
+\renewcommand{\arraystretch}{1.18}
+\begin{tabular}{@{}rrrrlrrr@{}}
+\toprule
+$n$ & Peak RSS & Peak temp & Min free & Largest proof leaf & Leaf solve & Leaf check & Leaf DRAT \\
+    & (MiB) & (MB) & disk (GiB) & (branch on $(0,1,0,1)$) & (s) & (s) & (MB) \\
+\midrule
+50 & --- & --- & --- & \texttt{0\_0\_0\_1\_b8} & 33.96 & 33.66 & 33.65 \\
+52 & --- & --- & --- & \texttt{0\_0\_1\_1\_b3} & 23.12 & 21.57 & 29.83 \\
+54 & --- & --- & --- & \texttt{0\_0\_0\_1\_b8} & 155.18 & 234.21 & 133.25 \\
+\midrule
+56 & 929.2 & 208.0 & 21.59 & \texttt{0\_0\_1\_1\_b3} & 32.59 & 40.14 & 73.53 \\
+58 & 1\,769.5 & 683.0 & 21.16 & \texttt{0\_0\_0\_1\_b8} & 937.76 & 496.59 & 671.15 \\
+60 & 1\,335.3 & 519.2 & 21.07 & \texttt{0\_0\_1\_1\_b3} & 267.03 & 326.73 & 369.37 \\
+62 & 4\,896.0 & 3\,066.6 & 21.06 & \texttt{0\_0\_0\_1\_b8} & 2\,475.08 & 2\,544.16 & 3\,066.20 \\
+64 & 3\,407.8 & 1\,953.9 & 22.04 & \texttt{0\_0\_1\_1\_b3} & 1\,185.09 & 1\,753.70 & 1\,830.66 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Observed computational bottlenecks and scheduling.}
+Table~\ref{tab:resources} reveals a sharp structural divergence between
+the bulk of the search space and a small set of leaves on the special
+frame $(0,1,0,1)$. While the zero-deficit monochromatic leaf
+(\texttt{b12}, which imposes the quadratic moment identity) remained
+under $0.75$\,s solve time ($1.14$\,s including checking) through
+$n=64$, two single-leaf families without quadratic moment constraints
+grew roughly fourfold to fivefold per step of $+4$ in $n$:
+\begin{itemize}[leftmargin=1.8em,itemsep=2pt]
+  \item For $n\equiv2\pmod4$, the single-deficit monochromatic leaf
+    \texttt{0\_1\_0\_1\_0\_0\_0\_1\_b8} grew from $33.65$\,MB ($n=50$)
+    and $133.25$\,MB ($n=54$) to $671.15$\,MB ($n=58$) and
+    $3\,066.20$\,MB ($n=62$). On $Q_{62}$ this single leaf took
+    $2\,475.08$\,s to solve and $2\,544.16$\,s to check ($5\,019.24$\,s
+    combined), accounting for essentially the entire $5\,020.18$\,s wall
+    time; the remaining $37\,570$ leaves totaled $6\,244.90$\,s solve
+    and $5\,731.02$\,s check across the other nine workers (averaging
+    $1\,330.7$\,s of combined solve-and-check work per worker).
+  \item For $n\equiv0\pmod4$, the total-deficit-two leaf
+    \texttt{0\_1\_0\_1\_0\_0\_1\_1\_b3} (which does not separate
+    monochromatic from bichromatic placements on $(0,1,0,1)$) grew from
+    $29.83$\,MB ($n=52$) and $73.53$\,MB ($n=56$) to $369.37$\,MB
+    ($n=60$) and $1\,830.66$\,MB ($n=64$, $1\,185.09$\,s solve and
+    $1\,753.70$\,s check).
+\end{itemize}
+Because \texttt{drat-trim} retains active proof clauses in memory, peak
+RAM and peak temporary disk usage during $Q_{58}$--$Q_{64}$ were governed
+almost entirely by the single largest active proof leaf ($4\,896$\,MiB
+peak RSS and $3\,067$\,MB peak temporary disk on $Q_{62}$), whereas
+ten-worker bulk execution on $Q_{56}$ remained below $930$\,MiB RSS and
+$210$\,MB temporary disk. Prioritizing $(0,1,0,1)$ leaves in branches~8,
+3, and~12 at the front of the work queue (a scheduling-only change
+verified to preserve all $74\,155$ archived $Q_{50}$--$Q_{54}$ CNF
+SHA-256 hashes bit-for-bit) allowed \texttt{0\_1\_0\_1\_0\_0\_1\_1\_b3}
+to run concurrently from $t=0$ and finish inside the bulk wall clock on
+both $Q_{60}$ ($2\,418.80$\,s) and $Q_{64}$ ($3\,270.29$\,s). Projecting
+from Table~\ref{tab:resources}, extending the unmodified encoder beyond
+$n=64$ will soon be limited not by leaf count, but by the single-leaf
+\texttt{drat-trim} memory footprint on $Q_{66}$ (\texttt{b8}) and
+$Q_{68}$ (\texttt{b3}) unless stronger quadratic or algebraic
+constraints are proved for $d_T+d_S\in\{1,2\}$ (or monochromatic
+placements are separated in branch~3).
+
+\paragraph{Controlled single-machine benchmarks ($n=26$).}
+For a controlled measurement of certification overhead on one Apple~M4, we used one worker,
 the pinned tools, and \texttt{auto} configuration. We chose up to
 12 leaves per branch type for $n=26$ by smallest SHA-256 tag
 digest, giving 99 leaves. Three runs per mode alternated which
@@ -846,13 +970,14 @@ different timing definitions and execution environments.
 \section{Explicit upper-bound witnesses}\label{sec:witnesses}
 
 Coordinates are $(x,y)=(\text{column},\text{row})$ and are indexed
-from zero. The witness search used permutations on odd-odd squares
-plus one additional queen. The verifier confirms the size of each
-listed set and checks every square for coverage. For the sets in
-Theorem~\ref{thm:indep} it also checks that all four line families
+from zero. The witness search (\texttt{src/witness\_sa.cpp}) used
+permutations on odd-odd squares plus one additional queen. The verifier
+confirms the size of each listed set and checks every square for
+coverage. For $Q_{60}$ (Corollary~\ref{cor:indep60}) and the five sets
+in Theorem~\ref{thm:indep}, it also verifies that all four line families
 have distinct indices across the queens.
 
-\paragraph{Dominating sets for Theorem~\ref{thm:main}.}
+\paragraph{Dominating sets for Theorem~\ref{thm:main} and Corollary~\ref{cor:indep60}.}
 \begin{itemize}[leftmargin=1.6em,itemsep=4pt]
   \item \textbf{$Q_{50}$ ($26$ queens):}
   $(0,0)$, $(1,3)$, $(3,35)$, $(5,25)$, $(7,15)$, $(9,9)$, $(11,39)$, $(13,49)$, $(15,19)$, $(17,27)$, $(19,11)$, $(21,45)$, $(23,29)$, $(25,1)$, $(27,21)$, $(29,41)$, $(31,47)$, $(33,23)$, $(35,7)$, $(37,17)$, $(39,37)$, $(41,5)$, $(43,31)$, $(45,13)$, $(47,43)$, $(49,33)$.
@@ -860,6 +985,16 @@ have distinct indices across the queens.
   $(0,0)$, $(1,15)$, $(3,29)$, $(5,43)$, $(7,37)$, $(9,41)$, $(11,45)$, $(13,11)$, $(15,7)$, $(17,19)$, $(19,1)$, $(21,25)$, $(23,31)$, $(25,3)$, $(27,49)$, $(29,39)$, $(31,27)$, $(33,51)$, $(35,5)$, $(37,23)$, $(39,33)$, $(41,47)$, $(43,9)$, $(45,35)$, $(47,21)$, $(49,17)$, $(51,13)$.
   \item \textbf{$Q_{54}$ ($28$ queens):}
   $(0,0)$, $(1,13)$, $(3,53)$, $(5,25)$, $(7,15)$, $(9,37)$, $(11,23)$, $(13,45)$, $(15,51)$, $(17,1)$, $(19,7)$, $(21,17)$, $(23,47)$, $(25,27)$, $(27,21)$, $(29,35)$, $(31,29)$, $(33,49)$, $(35,39)$, $(37,5)$, $(39,11)$, $(41,3)$, $(43,19)$, $(45,9)$, $(47,31)$, $(49,41)$, $(51,43)$, $(53,33)$.
+  \item \textbf{$Q_{56}$ ($29$ queens):}
+  $(0,0)$, $(1,17)$, $(3,23)$, $(5,45)$, $(7,51)$, $(9,33)$, $(11,43)$, $(13,19)$, $(15,7)$, $(17,13)$, $(19,55)$, $(21,31)$, $(23,21)$, $(25,53)$, $(27,29)$, $(29,5)$, $(31,39)$, $(33,27)$, $(35,47)$, $(37,1)$, $(39,11)$, $(41,25)$, $(43,3)$, $(45,49)$, $(47,15)$, $(49,37)$, $(51,41)$, $(53,9)$, $(55,35)$.
+  \item \textbf{$Q_{58}$ ($30$ queens):}
+  $(0,0)$, $(1,35)$, $(3,37)$, $(5,15)$, $(7,21)$, $(9,39)$, $(11,5)$, $(13,57)$, $(15,53)$, $(17,7)$, $(19,27)$, $(21,23)$, $(23,41)$, $(25,51)$, $(27,31)$, $(29,25)$, $(31,1)$, $(33,55)$, $(35,45)$, $(37,29)$, $(39,13)$, $(41,19)$, $(43,49)$, $(45,11)$, $(47,3)$, $(49,47)$, $(51,33)$, $(53,9)$, $(55,17)$, $(57,43)$.
+  \item \textbf{$Q_{60}$ ($31$ queens, independent, $i(Q_{60})=31$):}
+  $(0,0)$, $(1,45)$, $(3,39)$, $(5,15)$, $(7,27)$, $(9,13)$, $(11,43)$, $(13,3)$, $(15,11)$, $(17,57)$, $(19,47)$, $(21,9)$, $(23,37)$, $(25,31)$, $(27,25)$, $(29,53)$, $(31,17)$, $(33,35)$, $(35,29)$, $(37,1)$, $(39,55)$, $(41,49)$, $(43,19)$, $(45,5)$, $(47,59)$, $(49,21)$, $(51,7)$, $(53,33)$, $(55,23)$, $(57,41)$, $(59,51)$.
+  \item \textbf{$Q_{62}$ ($32$ queens):}
+  $(0,0)$, $(1,15)$, $(3,21)$, $(5,47)$, $(7,33)$, $(9,19)$, $(11,9)$, $(13,43)$, $(15,55)$, $(17,45)$, $(19,57)$, $(21,39)$, $(23,27)$, $(25,59)$, $(27,5)$, $(29,25)$, $(31,17)$, $(33,41)$, $(35,1)$, $(37,29)$, $(39,61)$, $(41,3)$, $(43,37)$, $(45,51)$, $(47,11)$, $(49,23)$, $(51,53)$, $(53,35)$, $(55,13)$, $(57,7)$, $(59,49)$, $(61,31)$.
+  \item \textbf{$Q_{64}$ ($33$ queens):}
+  $(0,0)$, $(1,41)$, $(3,23)$, $(5,53)$, $(7,43)$, $(9,25)$, $(11,7)$, $(13,17)$, $(15,59)$, $(17,5)$, $(19,11)$, $(21,31)$, $(23,37)$, $(25,57)$, $(27,51)$, $(29,9)$, $(31,33)$, $(33,61)$, $(35,21)$, $(37,35)$, $(39,29)$, $(41,49)$, $(43,55)$, $(45,1)$, $(47,19)$, $(49,13)$, $(51,3)$, $(53,47)$, $(55,15)$, $(57,63)$, $(59,27)$, $(61,45)$, $(63,39)$.
 \end{itemize}
 
 \paragraph{Independent dominating sets for Theorem~\ref{thm:indep}.}
@@ -879,43 +1014,51 @@ Each set below is pairwise non-attacking (distinct rows, columns, difference dia
 
 \section{Code and data availability}\label{sec:data}
 
-The encoder, checker wrapper, audit logs, and witness coordinates
-are available in the public GitHub repository
-\url{https://github.com/CosmicCrusader23/queens} at pinned commit
-\href{https://github.com/CosmicCrusader23/queens/tree/\ReproCommit}{\texttt{\ReproCommit}}.
+The encoder, checker wrapper, resumable runner, audit logs, resource
+diagnostics, and witness coordinates are publicly available in the
+GitHub repository
+\href{https://github.com/CosmicCrusader23/queens}{\texttt{https://github.com/\allowbreak CosmicCrusader23/\allowbreak queens}}
+(pinned commit
+\href{https://github.com/CosmicCrusader23/queens/tree/\ReproCommit}{\nolinkurl{61e8df4438cad8837f4498ad4160394028ca7232}}).
+The earlier $Q_{50}$--$Q_{54}$ snapshot is preserved at commit
+\href{https://github.com/CosmicCrusader23/queens/tree/7872bd98a9d1d72d463c6b967717bd7ab093b7d8}{\nolinkurl{7872bd98a9d1d72d463c6b967717bd7ab093b7d8}}.
 The \href{https://github.com/CosmicCrusader23/queens/blob/\ReproCommit/README.md}{reproduction instructions}
 give the build, audit, and benchmark commands, a full regeneration
 procedure, and the pinned upstream commits: CaDiCaL~3.1.0 at
-\href{https://github.com/arminbiere/cadical/commit/e4d9bd93af444c6575a908a24da2c4130cb2a1c7}{\texttt{e4d9bd93af444c6575a908a24da2c4130cb2a1c7}}
+\href{https://github.com/arminbiere/cadical/commit/e4d9bd93af444c6575a908a24da2c4130cb2a1c7}{\nolinkurl{e4d9bd93af444c6575a908a24da2c4130cb2a1c7}}
 and \texttt{drat-trim} at
-\href{https://github.com/marijnheule/drat-trim/commit/2e3b2dc0ecf938addbd779d42877b6ed69d9a985}{\texttt{2e3b2dc0ecf938addbd779d42877b6ed69d9a985}}.
-The tested environment was a ten-core Apple~M4 (arm64) running
-macOS~26.5.2 (Darwin~25.5.0) with Apple Clang~17.0.0, C++20, and
-Python~3.14.0 (standard library only).
+\href{https://github.com/marijnheule/drat-trim/commit/2e3b2dc0ecf938addbd779d42877b6ed69d9a985}{\nolinkurl{2e3b2dc0ecf938addbd779d42877b6ed69d9a985}}.
+The tested environment was a ten-core Apple~M4 (arm64, 16\,GB RAM)
+running macOS~26.5.2 (Darwin~25.5.0) with Apple Clang~17.0.0, C++20,
+and Python~3.14.0 (standard library only).
 
 After building with \texttt{make -j4}, run \texttt{queen\_prover}
-with \texttt{--jobs 10 --certify --config auto} and \texttt{--n}
-set to 50, 52, or 54, using \texttt{--out} to save each JSONL log
-and running \texttt{python3 scripts/verify\_certificate.py} to check
-tags, regenerated CNF hashes, and checker statuses. The expected
-checked leaf counts are $19\,090$, $30\,814$, and $24\,251$. Use
-\texttt{--proof-dir} (naming a new directory) to retain the CNF
-and DRAT files; otherwise temporary files are deleted immediately
-after each leaf is checked. Table~\ref{tab:certified} gives the
-runtimes and decimal proof sizes ($2.69$\,GB, $6.21$\,GB, and
-$4.35$\,GB, totalling $13.25$\,GB) observed in the three certified
-runs. Runtimes and retained sizes can vary across systems. The
-witness check (\texttt{--witness-json results/even\_upper\_witnesses.json})
+with \texttt{-{}-jobs 10 -{}-certify -{}-config auto} (or
+\texttt{python3} \nolinkurl{scripts/run_certified_board.py}\
+\texttt{-{}-n N -{}-jobs 10}) for even $N$ with $50\le N\le 64$, and run
+\texttt{python3} \nolinkurl{scripts/verify_certificate.py} to verify tags,
+regenerated CNF hashes, checker statuses, and witnesses. The expected
+checked leaf counts are $19\,090$, $30\,814$, $24\,251$, $39\,144$,
+$30\,409$, $48\,856$, $37\,571$, and $60\,407$ ($290\,542$ total).
+Temporary CNF and DRAT files are deleted immediately after successful
+proof verification; do not enable \texttt{-{}-proof-dir} on complete
+board runs unless several hundred gigabytes of storage are available.
+Table~\ref{tab:certified} gives the runtimes and decimal DRAT proof
+volumes ($80.34$\,GB cumulative across all eight boards). The witness
+check (\texttt{-{}-witness-json} \nolinkurl{results/even_upper_witnesses.json})
 takes only the listed coordinates as input.
 
 \section{AI provenance}\label{sec:provenance}
 
 Gemini~4~Neon, used through Google Antigravity, carried out the
 original research, mathematical formulation, C++ and Python coding,
-computations, and manuscript drafting. OpenAI Codex assisted with an
-adversarial review, reproduction checks, and manuscript revisions.
+computations for $n=50,\dots,64$, verification scripts, and manuscript
+drafting and revision. OpenAI Codex assisted with an earlier adversarial
+review, reproduction checks, and manuscript revisions for $n=50,52,54$.
 The human author initiated and coordinated the project and reviewed
-the automated computation logs and verification outputs.
+the automated computation logs and verification outputs. Automated
+verification and AI adversarial review do not constitute independent
+human mathematical verification of the written proofs or encoder.
 
 \clearpage
 \begin{thebibliography}{99}
